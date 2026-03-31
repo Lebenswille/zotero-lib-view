@@ -1,10 +1,10 @@
 > Note: This plugin is vibe coded.
 
-# Zotero Library in Obsidian
+# zotero-library-in-obsidian
 
 This project is a major enhancement of the original [bibnotes](https://github.com/stefanopagliari/bibnotes) project by Stefano Pagliari, and is maintained at [Lebenswille/zotero-library-in-obsidian](https://github.com/Lebenswille/zotero-library-in-obsidian).
 
-Zotero Library in Obsidian is a comprehensive tool for importing, updating, and browsing your Zotero library directly inside Obsidian. It retains the powerful note-generation and annotation-formatting workflow of the original project while adding a structured, in-app Library View designed for managing reference-to-note connections seamlessly.
+zotero-library-in-obsidian is a comprehensive tool for importing, updating, and browsing your Zotero library directly inside Obsidian. It retains the powerful note-generation and annotation-formatting workflow of the original project while adding a structured, in-app Library View designed for managing reference-to-note connections seamlessly.
 
 ## What This Fork Adds
 
@@ -33,7 +33,7 @@ This version introduces a **library-first workflow** and several quality-of-life
 ### Manual Installation
 1. Download the latest release from GitHub.
 2. Unzip or clone the release into your vault's `.obsidian/plugins/zotero-library-in-obsidian/` directory.
-3. Enable "Zotero Library in Obsidian" in the Community plugins settings.
+3. Enable "zotero-library-in-obsidian" in the Community plugins settings.
 
 ### Via BRAT
 If you have the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat/) installed:

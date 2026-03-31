@@ -3799,7 +3799,7 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
     const { containerEl, plugin } = this;
     const { settings } = plugin;
     containerEl.empty();
-    containerEl.createEl("h1", { text: "Zotero Library in Obsidian" });
+    containerEl.createEl("h1", { text: "zotero-library-in-obsidian" });
     containerEl.createEl("a", { text: "Created by Lebenswille", href: "https://github.com/Lebenswille/zotero-library-in-obsidian" });
     containerEl.createEl("h2", { text: "Import Library" });
     const importLibrary = containerEl.createEl("details");
@@ -4394,7 +4394,7 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
 };
 
 // src/main.ts
-var BibNotesLibraryView = class extends import_obsidian6.ItemView {
+var ZoteroLibraryView = class extends import_obsidian6.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
@@ -4405,7 +4405,7 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
     return ZOTERO_LIBRARY_VIEW_TYPE;
   }
   getDisplayText() {
-    return "Zotero Library in Obsidian";
+    return "zotero-library-in-obsidian";
   }
   getIcon() {
     return "library";
@@ -4426,7 +4426,7 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
       container.addClass("zotero-library-view");
       const data = yield this.plugin.loadBibData(true);
       if (data == null) {
-        container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the BibNotes settings." });
+        container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the zotero-library-in-obsidian settings." });
         return;
       }
       const entries = this.plugin.buildLibraryEntries(data);
@@ -4602,7 +4602,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
       this.autoImportDebounce = void 0;
       this.libraryViewRefreshDebounce = void 0;
       this.isAutoImportRunning = false;
-      this.registerView(ZOTERO_LIBRARY_VIEW_TYPE, (leaf) => new BibNotesLibraryView(leaf, this));
+      this.registerView(ZOTERO_LIBRARY_VIEW_TYPE, (leaf) => new ZoteroLibraryView(leaf, this));
       this.addSettingTab(new SettingTab(this.app, this));
       this.addCommand({
         id: "importSelectedJson-modal",
@@ -4761,7 +4761,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     return __async(this, null, function* () {
       const leaves = this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
       for (const leaf of leaves) {
-        if (leaf.view instanceof BibNotesLibraryView) {
+        if (leaf.view instanceof ZoteroLibraryView) {
           yield leaf.view.renderLibrary();
         }
       }
@@ -4895,11 +4895,11 @@ var MyPlugin = class extends import_obsidian6.Plugin {
           return;
         const updatedEntries = yield this.updateLibraryEntries(data);
         if (updatedEntries.length > 0) {
-          new import_obsidian6.Notice(`Zotero Library in Obsidian auto-imported ${updatedEntries.length} updated reference(s)`);
+          new import_obsidian6.Notice(`zotero-library-in-obsidian auto-imported ${updatedEntries.length} updated reference(s)`);
         }
       } catch (error) {
         console.log(error);
-        new import_obsidian6.Notice("Zotero Library in Obsidian auto-import failed");
+        new import_obsidian6.Notice("zotero-library-in-obsidian auto-import failed");
       } finally {
         this.isAutoImportRunning = false;
       }

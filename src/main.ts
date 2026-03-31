@@ -57,7 +57,7 @@ import {
 } from "./utils";
 import { createImportSpecifier } from "typescript";
 
-class BibNotesLibraryView extends ItemView {
+class ZoteroLibraryView extends ItemView {
 	plugin: MyPlugin;
 	sortColumn: string;
 	sortDirection: "asc" | "desc";
@@ -74,7 +74,7 @@ class BibNotesLibraryView extends ItemView {
 	}
 
 	getDisplayText() {
-		return "Zotero Library in Obsidian";
+		return "zotero-library-in-obsidian";
 	}
 
 	getIcon() {
@@ -94,7 +94,7 @@ class BibNotesLibraryView extends ItemView {
 
 		const data: any = await this.plugin.loadBibData(true);
 		if (data == null) {
-			container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the BibNotes settings." });
+			container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the zotero-library-in-obsidian settings." });
 			return;
 		}
 
@@ -299,7 +299,7 @@ export default class MyPlugin extends Plugin {
 		this.libraryViewRefreshDebounce = undefined;
 		this.isAutoImportRunning = false;
 
-		this.registerView(ZOTERO_LIBRARY_VIEW_TYPE, (leaf) => new BibNotesLibraryView(leaf, this));
+		this.registerView(ZOTERO_LIBRARY_VIEW_TYPE, (leaf) => new ZoteroLibraryView(leaf, this));
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SettingTab(this.app, this));
@@ -483,7 +483,7 @@ export default class MyPlugin extends Plugin {
 	async refreshLibraryViews() {
 		const leaves = this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
 		for (const leaf of leaves) {
-			if (leaf.view instanceof BibNotesLibraryView) {
+			if (leaf.view instanceof ZoteroLibraryView) {
 				await leaf.view.renderLibrary();
 			}
 		}
@@ -632,11 +632,11 @@ export default class MyPlugin extends Plugin {
 
 			const updatedEntries = await this.updateLibraryEntries(data);
 			if (updatedEntries.length > 0) {
-				new Notice(`Zotero Library in Obsidian auto-imported ${updatedEntries.length} updated reference(s)`);
+				new Notice(`zotero-library-in-obsidian auto-imported ${updatedEntries.length} updated reference(s)`);
 			}
 		} catch (error) {
 			console.log(error);
-			new Notice("Zotero Library in Obsidian auto-import failed");
+			new Notice("zotero-library-in-obsidian auto-import failed");
 		} finally {
 			this.isAutoImportRunning = false;
 		}
@@ -1765,7 +1765,7 @@ export default class MyPlugin extends Plugin {
 							const tempAnnotationType = this.getAnnotationType(
 								lineElements.inlineTagsArray[indexTag],
 								annotationCommentAll);
-							//Currently bibnotes can only incorporate one transformation. So as soon as one of the tags matches one transformation this is applied to the code (superseding the first character) and the loop is interrupted. The tag is removed from the list that is printed after the comment 
+							//Currently zotero-library-in-obsidian can only incorporate one transformation. So as soon as one of the tags matches one transformation this is applied to the code (superseding the first character) and the loop is interrupted. The tag is removed from the list that is printed after the comment 
 							if (tempAnnotationType != "noKey") {
 								lineElements.annotationType = tempAnnotationType;
 
@@ -3022,7 +3022,7 @@ export default class MyPlugin extends Plugin {
 
 			// Select the line to be searched
 
-			//Remove formatting added by bibnotes at the beginning of the line
+			//Remove formatting added by zotero-library-in-obsidian at the beginning of the line
 			let selectedNewLine = newNoteArray[indexLines];
 			selectedNewLine = selectedNewLine.trim();
 			selectedNewLine = selectedNewLine.replace(/^- /gm, "");
@@ -3042,7 +3042,7 @@ export default class MyPlugin extends Plugin {
 			selectedNewLine = selectedNewLine.replace(authorKey_Zotero, "");
 			selectedNewLine = selectedNewLine.replace(authorKey_Zotfile, "");
 
-			//Remove formatting added by bibnotes at the end of the line
+			//Remove formatting added by zotero-library-in-obsidian at the end of the line
 			selectedNewLine = selectedNewLine.replace(/=$/gm, "");
 			selectedNewLine = selectedNewLine.replace(/\**$/gm, "");
 			selectedNewLine = selectedNewLine.replace(/\*$/gm, "");

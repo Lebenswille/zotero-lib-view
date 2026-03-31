@@ -151,7 +151,7 @@ When updating an existing note, you can decide whether to:
 
 ## Credits
 
-- This plugin is a fork of [BibNotes Formatter](https://github.com/stefanopagliari/bibnotes) by Stefano Pagliari.
+- This plugin is a fork of [zotero-library-in-obsidian](https://github.com/stefanopagliari/bibnotes) by Stefano Pagliari.
 - Maintained and Enhanced by [Lebenswille](https://github.com/Lebenswille).
 
 ---

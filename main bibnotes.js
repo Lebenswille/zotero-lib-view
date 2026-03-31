@@ -10,9 +10,6 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
-var __esm = (fn2, res) => function __init() {
-  return fn2 && (res = (0, fn2[Object.keys(fn2)[0]])(fn2 = 0)), res;
-};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[Object.keys(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -477,7 +474,7 @@ var require_color_classifier = __commonJS({
         }, {
           key: "classify",
           value: function classify(value) {
-            var format = arguments.length <= 1 || arguments[1] === void 0 ? "rgb" : arguments[1];
+            var format2 = arguments.length <= 1 || arguments[1] === void 0 ? "rgb" : arguments[1];
             var palette = this.palette;
             var algorithmType = this.algorithmType;
             var color = new Color(value);
@@ -485,7 +482,7 @@ var require_color_classifier = __commonJS({
             palette.forEach(function(paletteColor) {
               array.push({
                 distance: ColorDiff.diff(algorithmType, paletteColor, color),
-                color: format === "raw" ? paletteColor : paletteColor[format]
+                color: format2 === "raw" ? paletteColor : paletteColor[format2]
               });
             });
             return minBy(array, "distance").color;
@@ -494,7 +491,7 @@ var require_color_classifier = __commonJS({
           key: "classifyFromArray",
           value: function classifyFromArray(colors) {
             var _this = this;
-            var format = arguments.length <= 1 || arguments[1] === void 0 ? "rgb" : arguments[1];
+            var format2 = arguments.length <= 1 || arguments[1] === void 0 ? "rgb" : arguments[1];
             var results = [];
             var array = [];
             colors.forEach(function(value) {
@@ -506,17 +503,17 @@ var require_color_classifier = __commonJS({
               var palette = obj.palette;
               var color = obj.color;
               var _results$filter = results.filter(function(o) {
-                return equal(o.palette, palette[format]);
+                return equal(o.palette, palette[format2]);
               });
               var _results$filter2 = babelHelpers.slicedToArray(_results$filter, 1);
               var paletteColor = _results$filter2[0];
               if (!paletteColor) {
                 results.push({
-                  palette: palette[format],
-                  colors: [color[format]]
+                  palette: palette[format2],
+                  colors: [color[format2]]
                 });
               } else {
-                paletteColor.colors.push(color[format]);
+                paletteColor.colors.push(color[format2]);
               }
             });
             return results;
@@ -528,128 +525,6 @@ var require_color_classifier = __commonJS({
       ColorClassifier2.AlgorithmTypes = AlgorithmTypes2;
       return ColorClassifier2;
     });
-  }
-});
-
-// src/constants.ts
-var constants_exports = {};
-__export(constants_exports, {
-  BUILT_IN_LIBRARY_COLUMNS: () => BUILT_IN_LIBRARY_COLUMNS,
-  DEFAULT_SETTINGS: () => DEFAULT_SETTINGS,
-  EXCLUDED_DYNAMIC_LIBRARY_FIELDS: () => EXCLUDED_DYNAMIC_LIBRARY_FIELDS,
-  HeaderLevels: () => HeaderLevels,
-  TEMPLATE_BRACKET_REG: () => TEMPLATE_BRACKET_REG,
-  TEMPLATE_REG: () => TEMPLATE_REG,
-  ZOTERO_LIBRARY_HEADER_BUTTON_ID: () => ZOTERO_LIBRARY_HEADER_BUTTON_ID,
-  ZOTERO_LIBRARY_VIEW_TYPE: () => ZOTERO_LIBRARY_VIEW_TYPE,
-  templateAdmonition: () => templateAdmonition,
-  templatePlain: () => templatePlain
-});
-var templatePlain, templateAdmonition, ZOTERO_LIBRARY_VIEW_TYPE, ZOTERO_LIBRARY_HEADER_BUTTON_ID, BUILT_IN_LIBRARY_COLUMNS, EXCLUDED_DYNAMIC_LIBRARY_FIELDS, DEFAULT_SETTINGS, HeaderLevels, TEMPLATE_REG, TEMPLATE_BRACKET_REG;
-var init_constants = __esm({
-  "src/constants.ts"() {
-    templatePlain = "# {{title}}\n\n## Metadata\n- **CiteKey**: {{citekey}}\n - **Type**: {{itemType}}\n - **Title**: {{title}}, \n - **Author**: {{author}};  \n- **Editor**: {{editor}};  \n- **Translator**: {{translator}}\n- **Publisher**: {{publisher}},\n- **Location**: {{place}},\n- **Series**: {{series}}\n- **Series Number**: {{seriesNumber}}\n- **Journal**: {{publicationTitle}}, \n- **Volume**: {{volume}},\n- **Issue**: {{issue}}\n- **Pages**: {{pages}}\n- **Year**: {{year}} \n- **DOI**: {{DOI}}\n- **ISSN**: {{ISSN}}\n- **ISBN**: {{ISBN}}\n\n## Abstract\n{{abstractNote}}\n## Files and Links\n- **Url**: {{url}}\n- **Uri**: {{uri}}\n- **Eprint**: {{eprint}}\n- **File**: {{file}}\n- **Local Library**: [Zotero]({{localLibraryLink}})\n\n## Tags and Collections\n- **Keywords**: {{keywordsAll}}\n- **Collections**: {{collectionsParent}}\n\n\n----\n\n## Comments\n{{UserNotes}}\n\n\n----\n\n## Extracted Annotations\n{{PDFNotes}}";
-    templateAdmonition = "# {{title}}\n\n``` ad-info\ntitle: Metadata\n- **CiteKey**: {{citekey}}\n- **Type**: {{itemType}}\n- **Author**: {{author}}\n- **Editor**: {{editor}}\n- **Translator**: {{translator}}\n- **Publisher**: {{publisher}}\n- **Location**: {{place}}\n- **Series**: {{series}}\n- **Series Number**: {{seriesNumber}}\n- **Journal**: {{publicationTitle}}\n- **Volume**: {{volume}}\n- **Issue**: {{issue}}\n- **Pages**: {{pages}}\n- **Year**: {{year}} \n- **DOI**: {{DOI}}\n- **ISSN**: {{ISSN}}\n- **ISBN**: {{ISBN}}\n```\n```ad-quote\ntitle: Abstract\n{{abstractNote}}\n```\n```ad-abstract\ntitle: Files and Links\n- **Url**: {{url}}\n- **Uri**: {{uri}}\n- **Eprint**: {{eprint}}\n- **File**: {{file}}\n- **Local Library**: [Zotero]({{localLibraryLink}})\n```\n```ad-note\ntitle: Tags and Collections\n- **Keywords**: {{keywordsAll}}\n- **Collections**: {{collectionsParent}}\n```\n\n----\n\n## Comments\n{{UserNotes}}\n\n\n----\n\n## Extracted Annotations\n{{PDFNotes}}";
-    ZOTERO_LIBRARY_VIEW_TYPE = "zotero-library-view";
-    ZOTERO_LIBRARY_HEADER_BUTTON_ID = "zotero-library-header-button";
-    BUILT_IN_LIBRARY_COLUMNS = ["Obsidian Notes", "Year", "Type", "Title", "Authors", "Publication", "Tags", "Added", "Actions"];
-    EXCLUDED_DYNAMIC_LIBRARY_FIELDS = new Set(["citationKey", "date", "itemType", "title", "creators", "publicationTitle", "tags", "dateAdded", "url", "select", "uri"]);
-    DEFAULT_SETTINGS = {
-      bibPath: "",
-      autoImportOnBibChange: false,
-      libraryViewColumns: BUILT_IN_LIBRARY_COLUMNS.slice(),
-      templateContent: templatePlain,
-      templatePath: "",
-      templateType: "Admonition",
-      lastUpdateDate: new Date("1995-12-17T03:24:00"),
-      updateLibrary: "Only update existing notes",
-      exportPath: "",
-      exportTitle: "{{citeKey}}",
-      missingfield: "Leave placeholder",
-      saveManualEdits: "Save Entire Note",
-      saveManualEditsStart: "",
-      saveManualEditsEnd: "",
-      imagesImport: true,
-      imagesCopy: false,
-      imagesPath: "",
-      imagesCommentPosition: "Above the image",
-      keyMergeAbove: "+",
-      keyCommentPrepend: "%",
-      commentPrependDefault: false,
-      TagBeginningConfig: "Tag: ",
-      TagEndConfig: "",
-      TagDividerConfig: "; ",
-      keyH1: "#",
-      keyH2: "##",
-      keyH3: "###",
-      keyH4: "####",
-      keyH5: "#####",
-      keyH6: "######",
-      keyKeyword: "=",
-      keyTask: "todo",
-      isHighlightItalic: true,
-      isHighlightBold: false,
-      isHighlightHighlighted: false,
-      isHighlightColoured: false,
-      isHighlightBullet: true,
-      isHighlightBlockquote: false,
-      isHighlightQuote: true,
-      highlightCustomTextBefore: "",
-      highlightCustomTextAfter: "",
-      isCommentItalic: false,
-      isCommentBold: true,
-      isCommentHighlighted: false,
-      isCommentColoured: false,
-      isCommentBullet: false,
-      isCommentBlockquote: true,
-      isCommentQuote: false,
-      commentCustomTextBefore: "",
-      commentCustomTextAfter: "",
-      isTagItalic: false,
-      isTagBold: false,
-      isTagHighlighted: false,
-      isTagColoured: false,
-      isTagBullet: false,
-      isTagBlockquote: false,
-      isTagQuote: false,
-      isTagHash: true,
-      tagCustomTextBefore: "#",
-      tagCustomTextAfter: "",
-      tagCustomTextBeforeFirst: "",
-      tagCustomTextAfterLast: "",
-      isDoubleSpaced: true,
-      highlightExportTemplate: "{{highlight}} {{comment}} {{tag}}",
-      colourYellowText: "{{highlight}}",
-      colourPurpleText: "{{highlight}}",
-      colourRedText: "{{highlight}}",
-      colourGreenText: "{{highlight}}",
-      colourBlueText: "{{highlight}}",
-      colourBlackText: "{{highlight}}",
-      colourWhiteText: "{{highlight}}",
-      colourGrayText: "{{highlight}}",
-      colourOrangeText: "{{highlight}}",
-      colourCyanText: "{{highlight}}",
-      colourMagentaText: "{{highlight}}",
-      colourCustomHexValue: "#999999",
-      colourCustomHexText: "{{highlight}}",
-      multipleFieldsDivider: ";",
-      nameFormat: "{{lastName}}, {{firstName}}",
-      highlightCitationsFormat: "Author, year, page number",
-      highlightCitationsLink: true,
-      debugMode: false,
-      zoteroStoragePathManual: "",
-      missingfieldreplacement: "NA"
-    };
-    (function(HeaderLevels2) {
-      HeaderLevels2[HeaderLevels2["typeH1"] = 1] = "typeH1";
-      HeaderLevels2[HeaderLevels2["typeH2"] = 2] = "typeH2";
-      HeaderLevels2[HeaderLevels2["typeH3"] = 3] = "typeH3";
-      HeaderLevels2[HeaderLevels2["typeH4"] = 4] = "typeH4";
-      HeaderLevels2[HeaderLevels2["typeH5"] = 5] = "typeH5";
-      HeaderLevels2[HeaderLevels2["typeH6"] = 6] = "typeH6";
-    })(HeaderLevels || (HeaderLevels = {}));
-    TEMPLATE_REG = /\{\{[^}]+\}\}/g;
-    TEMPLATE_BRACKET_REG = /\[\[\{\{[^}]+\}\}\]\]/g;
   }
 });
 
@@ -885,9 +760,6 @@ function trimTrailingNewlines(string) {
     indexEnd--;
   return string.substring(0, indexEnd);
 }
-function trimNewlines(string) {
-  return trimTrailingNewlines(trimLeadingNewlines(string));
-}
 var blockElements = [
   "ADDRESS",
   "ARTICLE",
@@ -1021,7 +893,8 @@ rules.heading = {
 rules.blockquote = {
   filter: "blockquote",
   replacement: function(content) {
-    content = trimNewlines(content).replace(/^/gm, "> ");
+    content = content.replace(/^\n+|\n+$/g, "");
+    content = content.replace(/^/gm, "> ");
     return "\n\n" + content + "\n\n";
   }
 };
@@ -1039,6 +912,7 @@ rules.list = {
 rules.listItem = {
   filter: "li",
   replacement: function(content, node, options) {
+    content = content.replace(/^\n+/, "").replace(/\n+$/, "\n").replace(/\n/gm, "\n    ");
     var prefix = options.bulletListMarker + "   ";
     var parent = node.parentNode;
     if (parent.nodeName === "OL") {
@@ -1046,10 +920,7 @@ rules.listItem = {
       var index = Array.prototype.indexOf.call(parent.children, node);
       prefix = (start2 ? Number(start2) + index : index + 1) + ".  ";
     }
-    var isParagraph = /\n$/.test(content);
-    content = trimNewlines(content) + (isParagraph ? "\n" : "");
-    content = content.replace(/\n/gm, "\n" + " ".repeat(prefix.length));
-    return prefix + content + (node.nextSibling ? "\n" : "");
+    return prefix + content + (node.nextSibling && !/\n$/.test(content) ? "\n" : "");
   }
 };
 rules.indentedCodeBlock = {
@@ -1093,11 +964,9 @@ rules.inlineLink = {
   },
   replacement: function(content, node) {
     var href = node.getAttribute("href");
-    if (href)
-      href = href.replace(/([()])/g, "\\$1");
     var title = cleanAttribute(node.getAttribute("title"));
     if (title)
-      title = ' "' + title.replace(/"/g, '\\"') + '"';
+      title = ' "' + title + '"';
     return "[" + content + "](" + href + title + ")";
   }
 };
@@ -1365,7 +1234,7 @@ function shouldUseActiveX() {
   try {
     document.implementation.createHTMLDocument("").open();
   } catch (e) {
-    if (root.ActiveXObject)
+    if (window.ActiveXObject)
       useActiveX = true;
   }
   return useActiveX;
@@ -1419,7 +1288,7 @@ function flankingWhitespace(node, options) {
   return { leading: edges.leading, trailing: edges.trailing };
 }
 function edgeWhitespace(string) {
-  var m = string.match(/^(([ \t\r\n]*)(\s*))(?:(?=\S)[\s\S]*\S)?((\s*?)([ \t\r\n]*))$/);
+  var m = string.match(/^(([ \t\r\n]*)(\s*))[\s\S]*?((\s*?)([ \t\r\n]*))$/);
   return {
     leading: m[1],
     leadingAscii: m[2],
@@ -1467,9 +1336,9 @@ var escapes = [
   [/_/g, "\\_"],
   [/^(\d+)\. /g, "$1\\. "]
 ];
-function TurndownService(options) {
-  if (!(this instanceof TurndownService))
-    return new TurndownService(options);
+function TurndownService2(options) {
+  if (!(this instanceof TurndownService2))
+    return new TurndownService2(options);
   var defaults = {
     rules,
     headingStyle: "setext",
@@ -1496,14 +1365,14 @@ function TurndownService(options) {
   this.options = extend({}, defaults, options);
   this.rules = new Rules(this.options);
 }
-TurndownService.prototype = {
+TurndownService2.prototype = {
   turndown: function(input) {
     if (!canConvert(input)) {
       throw new TypeError(input + " is not a string, or an element/document/fragment node.");
     }
     if (input === "")
       return "";
-    var output = process.call(this, new RootNode(input, this.options));
+    var output = process2.call(this, new RootNode(input, this.options));
     return postProcess.call(this, output);
   },
   use: function(plugin) {
@@ -1535,7 +1404,7 @@ TurndownService.prototype = {
     }, string);
   }
 };
-function process(parentNode) {
+function process2(parentNode) {
   var self = this;
   return reduce.call(parentNode.childNodes, function(output, node) {
     node = new Node(node, self.options);
@@ -1559,7 +1428,7 @@ function postProcess(output) {
 }
 function replacementForNode(node) {
   var rule = this.rules.forNode(node);
-  var content = process.call(this, node);
+  var content = process2.call(this, node);
   var whitespace = node.flankingWhitespace;
   if (whitespace.leading || whitespace.trailing)
     content = content.trim();
@@ -1575,10 +1444,105 @@ function join(output, replacement) {
 function canConvert(input) {
   return input != null && (typeof input === "string" || input.nodeType && (input.nodeType === 1 || input.nodeType === 9 || input.nodeType === 11));
 }
-var turndown_browser_es_default = TurndownService;
 
-// src/main.ts
-init_constants();
+// src/constants.ts
+var templatePlain = "# {{title}}\n\n## Metadata\n- **CiteKey**: {{citekey}}\n - **Type**: {{itemType}}\n - **Title**: {{title}}, \n - **Author**: {{author}};  \n- **Editor**: {{editor}};  \n- **Translator**: {{translator}}\n- **Publisher**: {{publisher}},\n- **Location**: {{place}},\n- **Series**: {{series}}\n- **Series Number**: {{seriesNumber}}\n- **Journal**: {{publicationTitle}}, \n- **Volume**: {{volume}},\n- **Issue**: {{issue}}\n- **Pages**: {{pages}}\n- **Year**: {{year}} \n- **DOI**: {{DOI}}\n- **ISSN**: {{ISSN}}\n- **ISBN**: {{ISBN}}\n\n## Abstract\n{{abstractNote}}\n## Files and Links\n- **Url**: {{url}}\n- **Uri**: {{uri}}\n- **Eprint**: {{eprint}}\n- **File**: {{file}}\n- **Local Library**: [Zotero]({{localLibraryLink}})\n\n## Tags and Collections\n- **Keywords**: {{keywordsAll}}\n- **Collections**: {{collectionsParent}}\n\n\n----\n\n## Comments\n{{UserNotes}}\n\n\n----\n\n## Extracted Annotations\n{{PDFNotes}}";
+var templateAdmonition = "# {{title}}\n\n``` ad-info\ntitle: Metadata\n- **CiteKey**: {{citekey}}\n- **Type**: {{itemType}}\n- **Author**: {{author}}\n- **Editor**: {{editor}}\n- **Translator**: {{translator}}\n- **Publisher**: {{publisher}}\n- **Location**: {{place}}\n- **Series**: {{series}}\n- **Series Number**: {{seriesNumber}}\n- **Journal**: {{publicationTitle}}\n- **Volume**: {{volume}}\n- **Issue**: {{issue}}\n- **Pages**: {{pages}}\n- **Year**: {{year}} \n- **DOI**: {{DOI}}\n- **ISSN**: {{ISSN}}\n- **ISBN**: {{ISBN}}\n```\n```ad-quote\ntitle: Abstract\n{{abstractNote}}\n```\n```ad-abstract\ntitle: Files and Links\n- **Url**: {{url}}\n- **Uri**: {{uri}}\n- **Eprint**: {{eprint}}\n- **File**: {{file}}\n- **Local Library**: [Zotero]({{localLibraryLink}})\n```\n```ad-note\ntitle: Tags and Collections\n- **Keywords**: {{keywordsAll}}\n- **Collections**: {{collectionsParent}}\n```\n\n----\n\n## Comments\n{{UserNotes}}\n\n\n----\n\n## Extracted Annotations\n{{PDFNotes}}";
+var DEFAULT_SETTINGS = {
+  bibPath: "",
+  templateContent: templatePlain,
+  templatePath: "",
+  templateType: "Admonition",
+  lastUpdateDate: new Date("1995-12-17T03:24:00"),
+  updateLibrary: "Only update existing notes",
+  exportPath: "",
+  exportTitle: "{{citeKey}}",
+  missingfield: "Leave placeholder",
+  saveManualEdits: "Save Entire Note",
+  saveManualEditsStart: "",
+  saveManualEditsEnd: "",
+  imagesImport: true,
+  imagesCopy: false,
+  imagesPath: "",
+  imagesCommentPosition: "Above the image",
+  keyMergeAbove: "+",
+  keyCommentPrepend: "%",
+  commentPrependDefault: false,
+  TagBeginningConfig: "Tag: ",
+  TagEndConfig: "",
+  TagDividerConfig: "; ",
+  keyH1: "#",
+  keyH2: "##",
+  keyH3: "###",
+  keyH4: "####",
+  keyH5: "#####",
+  keyH6: "######",
+  keyKeyword: "=",
+  keyTask: "todo",
+  isHighlightItalic: true,
+  isHighlightBold: false,
+  isHighlightHighlighted: false,
+  isHighlightColoured: false,
+  isHighlightBullet: true,
+  isHighlightBlockquote: false,
+  isHighlightQuote: true,
+  highlightCustomTextBefore: "",
+  highlightCustomTextAfter: "",
+  isCommentItalic: false,
+  isCommentBold: true,
+  isCommentHighlighted: false,
+  isCommentColoured: false,
+  isCommentBullet: false,
+  isCommentBlockquote: true,
+  isCommentQuote: false,
+  commentCustomTextBefore: "",
+  commentCustomTextAfter: "",
+  isTagItalic: false,
+  isTagBold: false,
+  isTagHighlighted: false,
+  isTagColoured: false,
+  isTagBullet: false,
+  isTagBlockquote: false,
+  isTagQuote: false,
+  isTagHash: true,
+  tagCustomTextBefore: "#",
+  tagCustomTextAfter: "",
+  tagCustomTextBeforeFirst: "",
+  tagCustomTextAfterLast: "",
+  isDoubleSpaced: true,
+  highlightExportTemplate: "{{highlight}} {{comment}} {{tag}}",
+  colourYellowText: "{{highlight}}",
+  colourPurpleText: "{{highlight}}",
+  colourRedText: "{{highlight}}",
+  colourGreenText: "{{highlight}}",
+  colourBlueText: "{{highlight}}",
+  colourBlackText: "{{highlight}}",
+  colourWhiteText: "{{highlight}}",
+  colourGrayText: "{{highlight}}",
+  colourOrangeText: "{{highlight}}",
+  colourCyanText: "{{highlight}}",
+  colourMagentaText: "{{highlight}}",
+  colourCustomHexValue: "#999999",
+  colourCustomHexText: "{{highlight}}",
+  multipleFieldsDivider: ";",
+  nameFormat: "{{lastName}}, {{firstName}}",
+  highlightCitationsFormat: "Author, year, page number",
+  highlightCitationsLink: true,
+  debugMode: false,
+  zoteroStoragePathManual: "",
+  missingfieldreplacement: "NA"
+};
+var HeaderLevels;
+(function(HeaderLevels2) {
+  HeaderLevels2[HeaderLevels2["typeH1"] = 1] = "typeH1";
+  HeaderLevels2[HeaderLevels2["typeH2"] = 2] = "typeH2";
+  HeaderLevels2[HeaderLevels2["typeH3"] = 3] = "typeH3";
+  HeaderLevels2[HeaderLevels2["typeH4"] = 4] = "typeH4";
+  HeaderLevels2[HeaderLevels2["typeH5"] = 5] = "typeH5";
+  HeaderLevels2[HeaderLevels2["typeH6"] = 6] = "typeH6";
+})(HeaderLevels || (HeaderLevels = {}));
+var TEMPLATE_REG = /\{\{[^}]+\}\}/g;
+var TEMPLATE_BRACKET_REG = /\[\[\{\{[^}]+\}\}\]\]/g;
 
 // src/modal.ts
 var fs = __toModule(require("fs"));
@@ -1587,7 +1551,6 @@ var import_obsidian2 = __toModule(require("obsidian"));
 // src/utils.ts
 var import_obsidian = __toModule(require("obsidian"));
 var import_path = __toModule(require("path"));
-init_constants();
 function replaceAllTemplates(entriesArray, note, selectedEntry) {
   let copy = note.slice();
   for (let z = 0; z < entriesArray.length; z++) {
@@ -2036,13 +1999,6 @@ function openSelectedNote(selectedEntry, exportTitle, exportPath) {
   const myFile = this.app.vault.getAbstractFileByPath(noteTitleShort);
   this.app.workspace.getUnpinnedLeaf().openFile(myFile);
 }
-function parseCiteKeyFromNoteName(noteName, format) {
-  const match = format.match("{{citeKey}}");
-  if (match != null) {
-    const regExp = format.substring(match.index != 0 ? match.index - 1 : match.index, match.index + match[0].length + 1).replace("{{citeKey}}", "(s*[a-zA-Z0-9]+s*)");
-    return noteName.match(regExp)[1];
-  }
-}
 
 // src/modal.ts
 var fuzzySelectEntryFromJson = class extends import_obsidian2.FuzzySuggestModal {
@@ -2352,7 +2308,7 @@ var round = Math.round;
 // node_modules/@popperjs/core/lib/utils/userAgent.js
 function getUAString() {
   var uaData = navigator.userAgentData;
-  if (uaData != null && uaData.brands && Array.isArray(uaData.brands)) {
+  if (uaData != null && uaData.brands) {
     return uaData.brands.map(function(item) {
       return item.brand + "/" + item.version;
     }).join(" ");
@@ -2583,7 +2539,15 @@ function effect2(_ref2) {
       return;
     }
   }
+  if (true) {
+    if (!isHTMLElement(arrowElement)) {
+      console.error(['Popper: "arrow" element must be an HTMLElement (not an SVGElement).', "To use an SVG arrow, wrap it in an HTMLElement that will be used as", "the arrow."].join(" "));
+    }
+  }
   if (!contains(state.elements.popper, arrowElement)) {
+    if (true) {
+      console.error(['Popper: "arrow" modifier\'s `element` must be a child of the popper', "element."].join(" "));
+    }
     return;
   }
   state.elements.arrow = arrowElement;
@@ -2610,8 +2574,9 @@ var unsetSides = {
   bottom: "auto",
   left: "auto"
 };
-function roundOffsetsByDPR(_ref, win) {
+function roundOffsetsByDPR(_ref) {
   var x = _ref.x, y = _ref.y;
+  var win = window;
   var dpr = win.devicePixelRatio || 1;
   return {
     x: round(x * dpr) / dpr || 0,
@@ -2667,7 +2632,7 @@ function mapToStyles(_ref2) {
   var _ref4 = roundOffsets === true ? roundOffsetsByDPR({
     x,
     y
-  }, getWindow(popper2)) : {
+  }) : {
     x,
     y
   };
@@ -2682,6 +2647,14 @@ function mapToStyles(_ref2) {
 function computeStyles(_ref5) {
   var state = _ref5.state, options = _ref5.options;
   var _options$gpuAccelerat = options.gpuAcceleration, gpuAcceleration = _options$gpuAccelerat === void 0 ? true : _options$gpuAccelerat, _options$adaptive = options.adaptive, adaptive = _options$adaptive === void 0 ? true : _options$adaptive, _options$roundOffsets = options.roundOffsets, roundOffsets = _options$roundOffsets === void 0 ? true : _options$roundOffsets;
+  if (true) {
+    var transitionProperty = getComputedStyle(state.elements.popper).transitionProperty || "";
+    if (adaptive && ["transform", "top", "right", "bottom", "left"].some(function(property) {
+      return transitionProperty.indexOf(property) >= 0;
+    })) {
+      console.warn(["Popper: Detected CSS transitions on at least one of the following", 'CSS properties: "transform", "top", "right", "bottom", "left".', "\n\n", 'Disable the "computeStyles" modifier\'s `adaptive` option to allow', "for smooth transitions, or remove these properties from the CSS", "transition declaration on the popper element if only transitioning", "opacity or background-color for example.", "\n\n", "We recommend using the popper element as a wrapper around an inner", "element that can have any CSS property transitioned for animations."].join(" "));
+    }
+  }
   var commonStyles = {
     placement: getBasePlacement(state.placement),
     variation: getVariation(state.placement),
@@ -3038,6 +3011,9 @@ function computeAutoPlacement(state, options) {
   });
   if (allowedPlacements.length === 0) {
     allowedPlacements = placements2;
+    if (true) {
+      console.error(["Popper: The `allowedAutoPlacements` option did not allow any", "placements. Ensure the `placement` option matches the variation", "of the allowed placements.", 'For example, "auto" cannot be used to allow "bottom-start".', 'Use "auto-start" instead.'].join(" "));
+    }
   }
   var overflows = allowedPlacements.reduce(function(acc, placement2) {
     acc[placement2] = detectOverflow(state, {
@@ -3481,6 +3457,92 @@ function debounce(fn2) {
   };
 }
 
+// node_modules/@popperjs/core/lib/utils/format.js
+function format(str) {
+  for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    args[_key - 1] = arguments[_key];
+  }
+  return [].concat(args).reduce(function(p, c) {
+    return p.replace(/%s/, c);
+  }, str);
+}
+
+// node_modules/@popperjs/core/lib/utils/validateModifiers.js
+var INVALID_MODIFIER_ERROR = 'Popper: modifier "%s" provided an invalid %s property, expected %s but got %s';
+var MISSING_DEPENDENCY_ERROR = 'Popper: modifier "%s" requires "%s", but "%s" modifier is not available';
+var VALID_PROPERTIES = ["name", "enabled", "phase", "fn", "effect", "requires", "options"];
+function validateModifiers(modifiers) {
+  modifiers.forEach(function(modifier) {
+    [].concat(Object.keys(modifier), VALID_PROPERTIES).filter(function(value, index, self) {
+      return self.indexOf(value) === index;
+    }).forEach(function(key) {
+      switch (key) {
+        case "name":
+          if (typeof modifier.name !== "string") {
+            console.error(format(INVALID_MODIFIER_ERROR, String(modifier.name), '"name"', '"string"', '"' + String(modifier.name) + '"'));
+          }
+          break;
+        case "enabled":
+          if (typeof modifier.enabled !== "boolean") {
+            console.error(format(INVALID_MODIFIER_ERROR, modifier.name, '"enabled"', '"boolean"', '"' + String(modifier.enabled) + '"'));
+          }
+          break;
+        case "phase":
+          if (modifierPhases.indexOf(modifier.phase) < 0) {
+            console.error(format(INVALID_MODIFIER_ERROR, modifier.name, '"phase"', "either " + modifierPhases.join(", "), '"' + String(modifier.phase) + '"'));
+          }
+          break;
+        case "fn":
+          if (typeof modifier.fn !== "function") {
+            console.error(format(INVALID_MODIFIER_ERROR, modifier.name, '"fn"', '"function"', '"' + String(modifier.fn) + '"'));
+          }
+          break;
+        case "effect":
+          if (modifier.effect != null && typeof modifier.effect !== "function") {
+            console.error(format(INVALID_MODIFIER_ERROR, modifier.name, '"effect"', '"function"', '"' + String(modifier.fn) + '"'));
+          }
+          break;
+        case "requires":
+          if (modifier.requires != null && !Array.isArray(modifier.requires)) {
+            console.error(format(INVALID_MODIFIER_ERROR, modifier.name, '"requires"', '"array"', '"' + String(modifier.requires) + '"'));
+          }
+          break;
+        case "requiresIfExists":
+          if (!Array.isArray(modifier.requiresIfExists)) {
+            console.error(format(INVALID_MODIFIER_ERROR, modifier.name, '"requiresIfExists"', '"array"', '"' + String(modifier.requiresIfExists) + '"'));
+          }
+          break;
+        case "options":
+        case "data":
+          break;
+        default:
+          console.error('PopperJS: an invalid property has been provided to the "' + modifier.name + '" modifier, valid properties are ' + VALID_PROPERTIES.map(function(s) {
+            return '"' + s + '"';
+          }).join(", ") + '; but "' + key + '" was provided.');
+      }
+      modifier.requires && modifier.requires.forEach(function(requirement) {
+        if (modifiers.find(function(mod) {
+          return mod.name === requirement;
+        }) == null) {
+          console.error(format(MISSING_DEPENDENCY_ERROR, String(modifier.name), requirement, requirement));
+        }
+      });
+    });
+  });
+}
+
+// node_modules/@popperjs/core/lib/utils/uniqueBy.js
+function uniqueBy(arr, fn2) {
+  var identifiers = new Set();
+  return arr.filter(function(item) {
+    var identifier = fn2(item);
+    if (!identifiers.has(identifier)) {
+      identifiers.add(identifier);
+      return true;
+    }
+  });
+}
+
 // node_modules/@popperjs/core/lib/utils/mergeByName.js
 function mergeByName(modifiers) {
   var merged = modifiers.reduce(function(merged2, current) {
@@ -3497,6 +3559,8 @@ function mergeByName(modifiers) {
 }
 
 // node_modules/@popperjs/core/lib/createPopper.js
+var INVALID_ELEMENT_ERROR = "Popper: Invalid reference or popper argument provided. They must be either a DOM element or virtual element.";
+var INFINITE_LOOP_ERROR = "Popper: An infinite loop in the modifiers cycle has been detected! The cycle has been interrupted to prevent a browser crash.";
 var DEFAULT_OPTIONS = {
   placement: "bottom",
   modifiers: [],
@@ -3547,6 +3611,28 @@ function popperGenerator(generatorOptions) {
         state.orderedModifiers = orderedModifiers.filter(function(m) {
           return m.enabled;
         });
+        if (true) {
+          var modifiers = uniqueBy([].concat(orderedModifiers, state.options.modifiers), function(_ref) {
+            var name = _ref.name;
+            return name;
+          });
+          validateModifiers(modifiers);
+          if (getBasePlacement(state.options.placement) === auto) {
+            var flipModifier = state.orderedModifiers.find(function(_ref2) {
+              var name = _ref2.name;
+              return name === "flip";
+            });
+            if (!flipModifier) {
+              console.error(['Popper: "auto" placements require the "flip" modifier be', "present and enabled to work."].join(" "));
+            }
+          }
+          var _getComputedStyle = getComputedStyle(popper2), marginTop = _getComputedStyle.marginTop, marginRight = _getComputedStyle.marginRight, marginBottom = _getComputedStyle.marginBottom, marginLeft = _getComputedStyle.marginLeft;
+          if ([marginTop, marginRight, marginBottom, marginLeft].some(function(margin) {
+            return parseFloat(margin);
+          })) {
+            console.warn(['Popper: CSS "margin" styles cannot be used to apply padding', "between the popper and its reference element or boundary.", "To replicate margin, use the `offset` modifier, as well as", "the `padding` option in the `preventOverflow` and `flip`", "modifiers."].join(" "));
+          }
+        }
         runModifierEffects();
         return instance.update();
       },
@@ -3556,6 +3642,9 @@ function popperGenerator(generatorOptions) {
         }
         var _state$elements = state.elements, reference3 = _state$elements.reference, popper3 = _state$elements.popper;
         if (!areValidElements(reference3, popper3)) {
+          if (true) {
+            console.error(INVALID_ELEMENT_ERROR);
+          }
           return;
         }
         state.rects = {
@@ -3567,7 +3656,15 @@ function popperGenerator(generatorOptions) {
         state.orderedModifiers.forEach(function(modifier) {
           return state.modifiersData[modifier.name] = Object.assign({}, modifier.data);
         });
+        var __debug_loops__ = 0;
         for (var index = 0; index < state.orderedModifiers.length; index++) {
+          if (true) {
+            __debug_loops__ += 1;
+            if (__debug_loops__ > 100) {
+              console.error(INFINITE_LOOP_ERROR);
+              break;
+            }
+          }
           if (state.reset === true) {
             state.reset = false;
             index = -1;
@@ -3596,6 +3693,9 @@ function popperGenerator(generatorOptions) {
       }
     };
     if (!areValidElements(reference2, popper2)) {
+      if (true) {
+        console.error(INVALID_ELEMENT_ERROR);
+      }
       return instance;
     }
     instance.setOptions(options).then(function(state2) {
@@ -3604,8 +3704,8 @@ function popperGenerator(generatorOptions) {
       }
     });
     function runModifierEffects() {
-      state.orderedModifiers.forEach(function(_ref) {
-        var name = _ref.name, _ref$options = _ref.options, options2 = _ref$options === void 0 ? {} : _ref$options, effect4 = _ref.effect;
+      state.orderedModifiers.forEach(function(_ref3) {
+        var name = _ref3.name, _ref3$options = _ref3.options, options2 = _ref3$options === void 0 ? {} : _ref3$options, effect4 = _ref3.effect;
         if (typeof effect4 === "function") {
           var cleanupFn = effect4({
             state,
@@ -3799,8 +3899,8 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
     const { containerEl, plugin } = this;
     const { settings } = plugin;
     containerEl.empty();
-    containerEl.createEl("h1", { text: "Zotero Library in Obsidian" });
-    containerEl.createEl("a", { text: "Created by Lebenswille", href: "https://github.com/Lebenswille/zotero-library-in-obsidian" });
+    containerEl.createEl("h1", { text: "BibNotes Formatter (for Zotero) " });
+    containerEl.createEl("a", { text: "Created by Stefano Pagliari", href: "https://github.com/stefanopagliari/" });
     containerEl.createEl("h2", { text: "Import Library" });
     const importLibrary = containerEl.createEl("details");
     importLibrary.setAttribute("open", "");
@@ -3809,115 +3909,7 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
       console.log("Path Bib: " + value);
       settings.bibPath = value;
       yield plugin.saveSettings();
-      yield plugin.refreshDiscoveredLibraryFields(true);
-      this.display();
     })));
-    new import_obsidian5.Setting(importLibrary).setName("Auto Import on Json Change").setDesc("Automatically update related notes when the BetterBibTex JSON file changes.").addToggle((toggle) => toggle.setValue(settings.autoImportOnBibChange).onChange((value) => __async(this, null, function* () {
-      settings.autoImportOnBibChange = value;
-      yield plugin.saveSettings();
-    })));
-    const libraryColumnsContainer = importLibrary.createDiv();
-    const saveLibraryColumns = (columns) => __async(this, null, function* () {
-      settings.libraryViewColumns = plugin.parseLibraryViewColumns(columns.join(","));
-      yield plugin.saveSettings();
-      plugin.refreshLibraryViews();
-      renderLibraryColumnsEditor();
-    });
-    const silentSaveLibraryColumns = (columns) => __async(this, null, function* () {
-      settings.libraryViewColumns = plugin.parseLibraryViewColumns(columns.join(","));
-      yield plugin.saveSettings();
-      plugin.refreshLibraryViews();
-    });
-    const renderLibraryColumnsEditor = () => {
-      libraryColumnsContainer.empty();
-      const availableColumns = plugin.getAvailableLibraryViewColumns();
-      const currentColumns = plugin.getLibraryViewColumns().slice();
-      new import_obsidian5.Setting(libraryColumnsContainer).setName("Library View Columns").setDesc("Customize each column: [Title] [Source Field] [Sub-Property]. Example: My Notes | notes | note");
-      currentColumns.forEach((columnString, index) => {
-        const parts = columnString.split("|");
-        const displayName = parts[0];
-        const fieldName = parts[1] || displayName;
-        const subProperty = parts[2] || "";
-        const setting = new import_obsidian5.Setting(libraryColumnsContainer).setName(`Column ${index + 1}`);
-        setting.addText((text) => {
-          text.setPlaceholder("Title").setValue(displayName).onChange((val) => __async(this, null, function* () {
-            parts[0] = val;
-            currentColumns[index] = parts.join("|");
-            yield silentSaveLibraryColumns(currentColumns);
-          }));
-          text.inputEl.addEventListener("blur", () => {
-            renderLibraryColumnsEditor();
-          });
-        });
-        setting.addDropdown((dropdown) => {
-          availableColumns.forEach((option) => {
-            dropdown.addOption(option, option);
-          });
-          dropdown.setValue(fieldName);
-          dropdown.onChange((value) => __async(this, null, function* () {
-            parts[1] = value;
-            currentColumns[index] = parts.join("|");
-            yield saveLibraryColumns(currentColumns);
-          }));
-        });
-        setting.addDropdown((dropdown) => {
-          const subs = (plugin.discoveredSubFields || {})[fieldName] || [];
-          dropdown.addOption("", "- none -");
-          subs.forEach((option) => {
-            dropdown.addOption(option, option);
-          });
-          dropdown.setValue(subProperty);
-          dropdown.onChange((value) => __async(this, null, function* () {
-            parts[2] = value;
-            currentColumns[index] = [parts[0], parts[1] || parts[0], value].join("|");
-            yield saveLibraryColumns(currentColumns);
-          }));
-        });
-        setting.addExtraButton((button) => {
-          button.setIcon("arrow-up").setTooltip("Move up").setDisabled(index === 0).onClick(() => __async(this, null, function* () {
-            if (index === 0)
-              return;
-            const nextColumns = currentColumns.slice();
-            const previousValue = nextColumns[index - 1];
-            nextColumns[index - 1] = nextColumns[index];
-            nextColumns[index] = previousValue;
-            yield saveLibraryColumns(nextColumns);
-          }));
-        }).addExtraButton((button) => {
-          button.setIcon("arrow-down").setTooltip("Move down").setDisabled(index === currentColumns.length - 1).onClick(() => __async(this, null, function* () {
-            if (index === currentColumns.length - 1)
-              return;
-            const nextColumns = currentColumns.slice();
-            const nextValue = nextColumns[index + 1];
-            nextColumns[index + 1] = nextColumns[index];
-            nextColumns[index] = nextValue;
-            yield saveLibraryColumns(nextColumns);
-          }));
-        }).addExtraButton((button) => {
-          button.setIcon("cross").setTooltip("Remove column").setDisabled(currentColumns.length <= 1).onClick(() => __async(this, null, function* () {
-            if (currentColumns.length <= 1)
-              return;
-            const nextColumns = currentColumns.filter((_, currentIndex) => currentIndex !== index);
-            yield saveLibraryColumns(nextColumns);
-          }));
-        });
-      });
-      new import_obsidian5.Setting(libraryColumnsContainer).addButton((button) => {
-        button.setButtonText("Add Column").onClick(() => __async(this, null, function* () {
-          const nextColumns = currentColumns.concat(["New Column"]);
-          yield saveLibraryColumns(nextColumns);
-        }));
-      }).addExtraButton((button) => {
-        button.setIcon("reset").setTooltip("Reset default columns").onClick(() => __async(this, null, function* () {
-          const { DEFAULT_SETTINGS: DEFAULT_SETTINGS2 } = (init_constants(), constants_exports);
-          settings.libraryViewColumns = (DEFAULT_SETTINGS2.libraryViewColumns || []).slice();
-          yield plugin.saveSettings();
-          plugin.refreshLibraryViews();
-          renderLibraryColumnsEditor();
-        }));
-      });
-    };
-    renderLibraryColumnsEditor();
     containerEl.createEl("h2", { text: "Export Notes" });
     const settingsExport = containerEl.createEl("details");
     settingsExport.setAttribute("open", "");
@@ -4394,215 +4386,10 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
 };
 
 // src/main.ts
-var BibNotesLibraryView = class extends import_obsidian6.ItemView {
-  constructor(leaf, plugin) {
-    super(leaf);
-    this.plugin = plugin;
-    this.sortColumn = "Added";
-    this.sortDirection = "desc";
-  }
-  getViewType() {
-    return ZOTERO_LIBRARY_VIEW_TYPE;
-  }
-  getDisplayText() {
-    return "Zotero Library in Obsidian";
-  }
-  getIcon() {
-    return "library";
-  }
-  onOpen() {
-    return __async(this, null, function* () {
-      yield this.renderLibrary();
-    });
-  }
-  onClose() {
-    return __async(this, null, function* () {
-    });
-  }
-  renderLibrary() {
-    return __async(this, null, function* () {
-      const container = this.contentEl;
-      container.empty();
-      container.addClass("zotero-library-view");
-      const data = yield this.plugin.loadBibData(true);
-      if (data == null) {
-        container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the BibNotes settings." });
-        return;
-      }
-      const entries = this.plugin.buildLibraryEntries(data);
-      const header = container.createDiv({ cls: "zotero-library-header" });
-      const titleWrap = header.createDiv({ cls: "zotero-library-title-wrap" });
-      titleWrap.createEl("h2", { text: "Zotero Library" });
-      titleWrap.createEl("p", {
-        text: `Source: ${this.plugin.settings.bibPath || "My Library.json"}`
-      });
-      const controls = header.createDiv({ cls: "zotero-library-controls" });
-      const searchInput = controls.createEl("input");
-      searchInput.type = "search";
-      searchInput.placeholder = "Search cite key, title, authors, tags...";
-      searchInput.oninput = () => {
-        renderRows(searchInput.value);
-      };
-      const stats = container.createDiv({ cls: "zotero-library-stats" });
-      const years = entries.map((entry) => Number(entry.year)).filter((year) => Number.isFinite(year));
-      const tags = [...new Set(entries.flatMap((entry) => entry.tagsArray))];
-      const publications = [...new Set(entries.map((entry) => entry.publication).filter((value) => value !== ""))];
-      const yearSummary = years.length > 0 ? `${Math.min(...years)}-${Math.max(...years)}` : "N/A";
-      [
-        ["References", String(entries.length)],
-        ["Years", yearSummary],
-        ["Tags", String(tags.length)],
-        ["Publications", String(publications.length)]
-      ].forEach(([label, value]) => {
-        const statCard = stats.createDiv({ cls: "zotero-library-stat" });
-        statCard.createDiv({ cls: "zotero-library-stat-label", text: label });
-        statCard.createDiv({ cls: "zotero-library-stat-value", text: value });
-      });
-      const tableWrap = container.createDiv({ cls: "zotero-library-table-wrap" });
-      const table = tableWrap.createEl("table", { cls: "zotero-library-table" });
-      const thead = table.createTHead();
-      const headRow = thead.insertRow();
-      const visibleColumns = this.plugin.getLibraryViewColumns();
-      const sortIndicators = {};
-      const updateSortIndicators = () => {
-        Object.entries(sortIndicators).forEach(([column, indicator]) => {
-          indicator.setText(this.sortColumn === column ? this.sortDirection === "asc" ? "\u2191" : "\u2193" : "");
-        });
-      };
-      visibleColumns.forEach((columnString) => {
-        const parts = columnString.split("|");
-        const label = parts[0];
-        const th = headRow.createEl("th");
-        th.addClass("zotero-library-sortable");
-        const headerLabel = th.createDiv({ cls: "zotero-library-sort-label" });
-        headerLabel.createSpan({ cls: "zotero-library-sort-text", text: label });
-        const indicator = headerLabel.createSpan({
-          cls: "zotero-library-sort-indicator",
-          text: this.sortColumn === columnString ? this.sortDirection === "asc" ? "\u2191" : "\u2193" : ""
-        });
-        sortIndicators[columnString] = indicator;
-        th.setAttr("role", "button");
-        th.setAttr("tabindex", "0");
-        const sortHandler = () => {
-          if (this.sortColumn === columnString) {
-            this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc";
-          } else {
-            this.sortColumn = columnString;
-            this.sortDirection = columnString.includes("Added") ? "desc" : "asc";
-          }
-          updateSortIndicators();
-          renderRows(searchInput.value);
-        };
-        th.addEventListener("click", sortHandler);
-        th.addEventListener("keydown", (event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            sortHandler();
-          }
-        });
-      });
-      const tbody = table.createTBody();
-      const renderRows = (query) => {
-        tbody.empty();
-        const normalizedQuery = query.trim().toLowerCase();
-        const filteredEntries = normalizedQuery === "" ? entries.slice() : entries.filter((entry) => entry.searchText.includes(normalizedQuery));
-        filteredEntries.sort((firstEntry, secondEntry) => this.plugin.compareLibraryEntries(firstEntry, secondEntry, this.sortColumn, this.sortDirection));
-        filteredEntries.forEach((entry) => {
-          const row = tbody.insertRow();
-          visibleColumns.forEach((columnString) => {
-            const parts = columnString.split("|");
-            const label = parts[0];
-            const field = parts[1] || label;
-            if (field === "Obsidian Notes") {
-              const citeCell = row.insertCell();
-              const noteLink = citeCell.createEl("a", { text: entry.citeKey, href: "#" });
-              noteLink.addEventListener("click", (event) => {
-                event.preventDefault();
-                this.plugin.openOrCreateLibraryEntryNote(entry);
-              });
-              return;
-            }
-            if (field === "Year") {
-              row.insertCell().setText(entry.year);
-              return;
-            }
-            if (field === "Type") {
-              row.insertCell().setText(entry.itemType);
-              return;
-            }
-            if (field === "Title") {
-              row.insertCell().setText(entry.title);
-              return;
-            }
-            if (field === "Authors") {
-              row.insertCell().setText(entry.authors);
-              return;
-            }
-            if (field === "Publication") {
-              row.insertCell().setText(entry.publication);
-              return;
-            }
-            if (field === "Tags") {
-              row.insertCell().setText(entry.tags);
-              return;
-            }
-            if (field === "Added") {
-              row.insertCell().setText(entry.dateAddedShort);
-              return;
-            }
-            if (field === "Actions") {
-              const actionsCell = row.insertCell();
-              actionsCell.addClass("zotero-library-actions");
-              if (entry.pdfLink !== "") {
-                const pdfButton = actionsCell.createEl("button", { text: "PDF" });
-                pdfButton.addEventListener("click", () => {
-                  const pdfFile = entry.pdfName && this.plugin.app.metadataCache.getFirstLinkpathDest(entry.pdfName, "") || this.plugin.app.metadataCache.getFirstLinkpathDest(entry.citeKey + ".pdf", "");
-                  if (pdfFile) {
-                    this.plugin.app.workspace.getLeaf(true).openFile(pdfFile);
-                  } else {
-                    window.open(entry.pdfLink, "_blank");
-                  }
-                });
-              }
-              if (entry.url !== "") {
-                const webButton = actionsCell.createEl("button", { text: "Web" });
-                webButton.addEventListener("click", () => {
-                  window.open(entry.url, "_blank");
-                });
-              }
-              if (entry.zoteroLink !== "") {
-                const zoteroButton = actionsCell.createEl("button", { text: "Zotero" });
-                zoteroButton.addEventListener("click", () => {
-                  window.open(entry.zoteroLink, "_blank");
-                });
-              }
-              const noteButton = actionsCell.createEl("button", { text: entry.noteFile != void 0 ? "Note" : "Create" });
-              noteButton.addEventListener("click", () => {
-                this.plugin.openOrCreateLibraryEntryNote(entry);
-              });
-              return;
-            }
-            row.insertCell().setText((entry.customFieldValues || {})[field] || "");
-          });
-        });
-      };
-      searchInput.oninput = () => {
-        renderRows(searchInput.value);
-      };
-      updateSortIndicators();
-      renderRows("");
-    });
-  }
-};
 var MyPlugin = class extends import_obsidian6.Plugin {
   onload() {
     return __async(this, null, function* () {
       yield this.loadSettings();
-      yield this.refreshDiscoveredLibraryFields(true);
-      this.autoImportDebounce = void 0;
-      this.libraryViewRefreshDebounce = void 0;
-      this.isAutoImportRunning = false;
-      this.registerView(ZOTERO_LIBRARY_VIEW_TYPE, (leaf) => new BibNotesLibraryView(leaf, this));
       this.addSettingTab(new SettingTab(this.app, this));
       this.addCommand({
         id: "importSelectedJson-modal",
@@ -4618,437 +4405,18 @@ var MyPlugin = class extends import_obsidian6.Plugin {
           new updateLibrary(this.app, this).open();
         }
       });
-      this.addCommand({
-        id: "update-current-note",
-        name: "Update Current Literature Note",
-        callback: () => {
-          this.updateCurrentNote();
-        }
-      });
-      this.addCommand({
-        id: "open-library-view",
-        name: "Open Zotero Library View in Sidebar",
-        callback: () => __async(this, null, function* () {
-          yield this.activateLibraryViewInSidebar();
-        })
-      });
-      this.addCommand({
-        id: "open-library-view-tab",
-        name: "Open Zotero Library View in Tab",
-        callback: () => __async(this, null, function* () {
-          yield this.activateLibraryViewInTab();
-        })
-      });
-      this.addRibbonIcon("library", "Open Zotero Library View", () => __async(this, null, function* () {
-        yield this.activateLibraryViewInTab();
-      }));
-      this.registerObsidianProtocolHandler("zotero-library", (params) => __async(this, null, function* () {
-        const view = typeof params.view === "string" ? params.view.toLowerCase() : "tab";
-        if (view === "sidebar") {
-          yield this.activateLibraryViewInSidebar();
-          return;
-        }
-        yield this.activateLibraryViewInTab();
-      }));
-      this.registerEvent(this.app.workspace.on("active-leaf-change", () => {
-        this.initHeaderLibraryButton();
-      }));
-      this.registerEvent(this.app.workspace.on("layout-change", () => {
-        this.initHeaderLibraryButton();
-      }));
-      this.registerEvent(this.app.workspace.on("file-open", () => {
-        this.initHeaderLibraryButton();
-      }));
-      this.registerBibFileWatcher();
-      this.initHeaderLibraryButton();
     });
   }
   onunload() {
-    if (this.autoImportDebounce != void 0) {
-      window.clearTimeout(this.autoImportDebounce);
-      this.autoImportDebounce = void 0;
-    }
-    if (this.libraryViewRefreshDebounce != void 0) {
-      window.clearTimeout(this.libraryViewRefreshDebounce);
-      this.libraryViewRefreshDebounce = void 0;
-    }
-    this.removeHeaderLibraryButtons();
-    this.app.workspace.detachLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
   }
   loadSettings() {
     return __async(this, null, function* () {
       this.settings = Object.assign({}, DEFAULT_SETTINGS, yield this.loadData());
-      this.discoveredLibraryFields = [];
-      this.discoveredSubFields = {};
     });
   }
   saveSettings() {
     return __async(this, null, function* () {
       yield this.saveData(this.settings);
-    });
-  }
-  removeHeaderLibraryButtons() {
-    const markdownLeaves = this.app.workspace.getLeavesOfType("markdown");
-    markdownLeaves.forEach((leaf) => {
-      const actionsEl = leaf.view.actionsEl;
-      if (!actionsEl)
-        return;
-      actionsEl.querySelectorAll(`#${ZOTERO_LIBRARY_HEADER_BUTTON_ID}`).forEach((element) => {
-        element.remove();
-      });
-    });
-  }
-  initHeaderLibraryButton() {
-    const activeView = this.app.workspace.getActiveViewOfType(import_obsidian6.MarkdownView);
-    this.removeHeaderLibraryButtons();
-    if (!activeView || !activeView.file)
-      return;
-    const fileCache = this.app.metadataCache.getFileCache(activeView.file);
-    const frontmatter = fileCache == null ? void 0 : fileCache.frontmatter;
-    if (!frontmatter || !Object.prototype.hasOwnProperty.call(frontmatter, "Zotero Library"))
-      return;
-    const actionsEl = activeView.actionsEl;
-    if (!actionsEl)
-      return;
-    const buttonContainer = actionsEl.createDiv();
-    buttonContainer.id = ZOTERO_LIBRARY_HEADER_BUTTON_ID;
-    buttonContainer.addClass("clickable-icon");
-    buttonContainer.addClass("view-action");
-    buttonContainer.setAttribute("aria-label", "Open Zotero Library View");
-    (0, import_obsidian6.setIcon)(buttonContainer, "library");
-    buttonContainer.addEventListener("click", () => __async(this, null, function* () {
-      yield this.activateLibraryViewInTab();
-    }));
-    if (actionsEl.firstChild) {
-      actionsEl.insertBefore(buttonContainer, actionsEl.firstChild);
-    } else {
-      actionsEl.appendChild(buttonContainer);
-    }
-  }
-  activateLibraryViewInSidebar() {
-    return __async(this, null, function* () {
-      this.app.workspace.detachLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
-      yield this.app.workspace.getRightLeaf(false).setViewState({
-        type: ZOTERO_LIBRARY_VIEW_TYPE,
-        active: true
-      });
-      this.app.workspace.revealLeaf(this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE)[0]);
-    });
-  }
-  activateLibraryViewInTab() {
-    return __async(this, null, function* () {
-      this.app.workspace.detachLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
-      yield this.app.workspace.getLeaf(true).setViewState({
-        type: ZOTERO_LIBRARY_VIEW_TYPE,
-        active: true
-      });
-      this.app.workspace.revealLeaf(this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE)[0]);
-    });
-  }
-  openOrCreateLibraryEntryNote(entry) {
-    return __async(this, null, function* () {
-      const { app } = this;
-      if (entry.noteFile) {
-        const leaf = app.workspace.getLeaf(false);
-        yield leaf.openFile(entry.noteFile);
-      } else {
-        yield this.createNote(entry.rawEntry, entry.rawData);
-        yield this.refreshLibraryViews();
-      }
-    });
-  }
-  refreshLibraryViews() {
-    return __async(this, null, function* () {
-      const leaves = this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
-      for (const leaf of leaves) {
-        if (leaf.view instanceof BibNotesLibraryView) {
-          yield leaf.view.renderLibrary();
-        }
-      }
-    });
-  }
-  parseLibraryViewColumns(value) {
-    const parsed = String(value || "").split(",").map((column) => column.trim()).filter((column) => column !== "");
-    if (parsed.length > 0) {
-      return parsed;
-    }
-    return BUILT_IN_LIBRARY_COLUMNS.slice();
-  }
-  getAvailableLibraryViewColumns() {
-    return Array.from(new Set(BUILT_IN_LIBRARY_COLUMNS.concat(this.discoveredLibraryFields || [])));
-  }
-  getLibraryViewColumns() {
-    const configuredColumns = this.settings.libraryViewColumns;
-    if (Array.isArray(configuredColumns) && configuredColumns.length > 0) {
-      return this.parseLibraryViewColumns(configuredColumns.join(","));
-    }
-    if (typeof configuredColumns === "string" && configuredColumns.trim() !== "") {
-      return this.parseLibraryViewColumns(configuredColumns);
-    }
-    return this.getAvailableLibraryViewColumns();
-  }
-  compareLibraryEntries(firstEntry, secondEntry, column, direction) {
-    const parts = column.split("|");
-    const label = parts[0];
-    const field = parts[1] || label;
-    const directionFactor = direction === "desc" ? -1 : 1;
-    let firstValue = "";
-    let secondValue = "";
-    if (field === "Obsidian Notes") {
-      firstValue = firstEntry.citeKey;
-      secondValue = secondEntry.citeKey;
-    } else if (field === "Year") {
-      firstValue = firstEntry.year;
-      secondValue = secondEntry.year;
-    } else if (field === "Type") {
-      firstValue = firstEntry.itemType;
-      secondValue = secondEntry.itemType;
-    } else if (field === "Title") {
-      firstValue = firstEntry.title;
-      secondValue = secondEntry.title;
-    } else if (field === "Authors") {
-      firstValue = firstEntry.authors;
-      secondValue = secondEntry.authors;
-    } else if (field === "Publication") {
-      firstValue = firstEntry.publication;
-      secondValue = secondEntry.publication;
-    } else if (field === "Tags") {
-      firstValue = firstEntry.tags;
-      secondValue = secondEntry.tags;
-    } else if (field === "Added") {
-      firstValue = firstEntry.dateAdded;
-      secondValue = secondEntry.dateAdded;
-    } else if (field === "Actions") {
-      firstValue = firstEntry.noteFile != null ? "0" : "1";
-      secondValue = secondEntry.noteFile != null ? "0" : "1";
-    } else {
-      firstValue = (firstEntry.customFieldValues || {})[field] || "";
-      secondValue = (secondEntry.customFieldValues || {})[field] || "";
-    }
-    const normalizedFirst = String(firstValue || "").toLowerCase();
-    const normalizedSecond = String(secondValue || "").toLowerCase();
-    if (normalizedFirst < normalizedSecond)
-      return -1 * directionFactor;
-    if (normalizedFirst > normalizedSecond)
-      return 1 * directionFactor;
-    return firstEntry.citeKey.localeCompare(secondEntry.citeKey) * directionFactor;
-  }
-  registerBibFileWatcher() {
-    const scheduleImport = (file) => {
-      const bibPath = (0, import_obsidian6.normalizePath)(this.settings.bibPath || "");
-      if (bibPath === "" || file.path !== bibPath)
-        return;
-      this.scheduleLibraryViewRefresh();
-      if (this.settings.autoImportOnBibChange === true) {
-        this.scheduleAutoImport();
-      }
-    };
-    const scheduleRefreshForReferenceNote = (file) => {
-      const exportPath = (0, import_obsidian6.normalizePath)(this.settings.exportPath || "");
-      if (exportPath === "")
-        return;
-      if (file.path.startsWith(exportPath + "/") && file.path.endsWith(".md")) {
-        this.scheduleLibraryViewRefresh();
-      }
-    };
-    this.registerEvent(this.app.vault.on("modify", (file) => {
-      scheduleImport(file);
-      scheduleRefreshForReferenceNote(file);
-    }));
-    this.registerEvent(this.app.vault.on("create", (file) => {
-      scheduleImport(file);
-      scheduleRefreshForReferenceNote(file);
-    }));
-    this.registerEvent(this.app.vault.on("delete", (file) => {
-      scheduleRefreshForReferenceNote(file);
-    }));
-    this.registerEvent(this.app.vault.on("rename", (file) => {
-      scheduleRefreshForReferenceNote(file);
-    }));
-  }
-  scheduleAutoImport() {
-    if (this.autoImportDebounce != void 0) {
-      window.clearTimeout(this.autoImportDebounce);
-    }
-    this.autoImportDebounce = window.setTimeout(() => {
-      this.autoImportDebounce = void 0;
-      this.runAutoImport();
-    }, 1500);
-  }
-  scheduleLibraryViewRefresh() {
-    if (this.libraryViewRefreshDebounce != void 0) {
-      window.clearTimeout(this.libraryViewRefreshDebounce);
-    }
-    this.libraryViewRefreshDebounce = window.setTimeout(() => {
-      this.libraryViewRefreshDebounce = void 0;
-      this.refreshLibraryViews();
-    }, 1500);
-  }
-  runAutoImport() {
-    return __async(this, null, function* () {
-      if (this.isAutoImportRunning)
-        return;
-      this.isAutoImportRunning = true;
-      try {
-        const data = yield this.loadBibData();
-        if (data == null)
-          return;
-        const updatedEntries = yield this.updateLibraryEntries(data);
-        if (updatedEntries.length > 0) {
-          new import_obsidian6.Notice(`Zotero Library in Obsidian auto-imported ${updatedEntries.length} updated reference(s)`);
-        }
-      } catch (error) {
-        console.log(error);
-        new import_obsidian6.Notice("Zotero Library in Obsidian auto-import failed");
-      } finally {
-        this.isAutoImportRunning = false;
-      }
-    });
-  }
-  loadBibData(silent = false) {
-    return __async(this, null, function* () {
-      const bibPath = (0, import_obsidian6.normalizePath)(this.settings.bibPath);
-      try {
-        const exists = yield this.app.vault.adapter.exists(bibPath);
-        if (!exists) {
-          if (!silent)
-            new import_obsidian6.Notice("No BetterBibTex Json file found at " + bibPath);
-          this.discoveredLibraryFields = [];
-          return void 0;
-        }
-        const rawdata = yield this.app.vault.adapter.read(bibPath);
-        const data = JSON.parse(rawdata);
-        this.discoveredLibraryFields = discoverLibraryFieldNames(data);
-        this.discoveredSubFields = discoverLibrarySubFields(data);
-        return data;
-      } catch (error) {
-        console.log(error);
-        if (!silent)
-          new import_obsidian6.Notice("Failed to read BetterBibTex Json file");
-        this.discoveredLibraryFields = [];
-        this.discoveredSubFields = {};
-        return void 0;
-      }
-    });
-  }
-  refreshDiscoveredLibraryFields(silent = false) {
-    return __async(this, null, function* () {
-      yield this.loadBibData(silent);
-    });
-  }
-  resolveLibraryEntryNoteFile(selectedEntry, notePathShort) {
-    const normalizedPath = (0, import_obsidian6.normalizePath)(notePathShort).replace(/^\/+/, "");
-    const directMatch = this.app.vault.getAbstractFileByPath(normalizedPath) || this.app.vault.getFileByPath(normalizedPath);
-    if (directMatch != null)
-      return directMatch;
-    const exportPath = (0, import_obsidian6.normalizePath)(this.settings.exportPath || "").replace(/^\/+/, "");
-    const expectedBasename = `@${selectedEntry.citationKey}`;
-    const markdownFiles = this.app.vault.getMarkdownFiles();
-    for (const file of markdownFiles) {
-      const normalizedFilePath = (0, import_obsidian6.normalizePath)(file.path).replace(/^\/+/, "");
-      if (exportPath !== "" && !normalizedFilePath.startsWith(exportPath + "/"))
-        continue;
-      if (file.basename === expectedBasename) {
-        return file;
-      }
-    }
-    return null;
-  }
-  buildLibraryEntries(data) {
-    const divider = normalizeDivider(this.settings.multipleFieldsDivider);
-    const entries = [];
-    for (let index = 0; index < data.items.length; index++) {
-      const selectedEntry = data.items[index];
-      if (selectedEntry.hasOwnProperty("citationKey") == false)
-        continue;
-      selectedEntry.authorKey = createAuthorKey(selectedEntry.creators);
-      selectedEntry.authorKeyInitials = createAuthorKeyInitials(selectedEntry.creators);
-      selectedEntry.authorKeyFullName = createAuthorKeyFullName(selectedEntry.creators);
-      if (selectedEntry.hasOwnProperty("date")) {
-        selectedEntry.year = selectedEntry.date.match(/\d\d\d\d/gm) + "";
-      }
-      const notePathShort = (0, import_obsidian6.normalizePath)(createNotePathShort(selectedEntry, this.settings.exportTitle, this.settings.exportPath)).replace(/^\/+/, "");
-      const noteFile = this.resolveLibraryEntryNoteFile(selectedEntry, notePathShort);
-      const tagsArray = getTagsForLibraryEntry(selectedEntry);
-      const authors = formatPrimaryCreatorListForLibrary(selectedEntry.creators || [], divider, this.settings.nameFormat);
-      const year = normalizeYearForLibrary(selectedEntry.date);
-      const publication = selectedEntry.publicationTitle || "";
-      const title = selectedEntry.title || "";
-      const customFieldValues = {};
-      const searchValues = [];
-      collectLibrarySearchValues(selectedEntry, searchValues);
-      const fieldMappings = {};
-      this.settings.libraryViewColumns.forEach((col) => {
-        const parts = col.split("|");
-        if (parts.length >= 3 && parts[2]) {
-          fieldMappings[parts[1] || parts[0]] = parts[2];
-        }
-      });
-      (this.discoveredLibraryFields || []).forEach((field) => {
-        const mappingProperty = fieldMappings[field] || (this.settings.fieldPropertyMapping || {})[field];
-        customFieldValues[field] = formatLibraryFieldValue(selectedEntry[field], divider, mappingProperty);
-      });
-      entries.push({
-        citeKey: selectedEntry.citationKey,
-        year,
-        itemType: normalizeItemTypeForLibrary(selectedEntry.itemType),
-        title,
-        authors,
-        publication,
-        tags: tagsArray.join(divider),
-        tagsArray,
-        dateAdded: selectedEntry.dateAdded || "",
-        dateAddedShort: selectedEntry.dateAdded ? String(selectedEntry.dateAdded).slice(0, 10) : "",
-        url: selectedEntry.url || "",
-        zoteroLink: selectedEntry.select || selectedEntry.uri || "",
-        pdfLink: (((selectedEntry.attachments || []).find((a) => (a.contentType === "application/pdf" || a.path && a.path.toLowerCase().endsWith(".pdf")) && a.select) || {}).select || "").replace("select", "open-pdf"),
-        pdfName: (((selectedEntry.attachments || []).find((a) => a.contentType === "application/pdf" || a.path && a.path.toLowerCase().endsWith(".pdf")) || {}).path || "").split("/").pop().split("\\").pop(),
-        rawEntry: selectedEntry,
-        rawData: data,
-        notePathShort,
-        noteFile,
-        customFieldValues,
-        searchText: searchValues.join(" ").toLowerCase()
-      });
-    }
-    entries.sort((firstEntry, secondEntry) => secondEntry.dateAdded.localeCompare(firstEntry.dateAdded) || firstEntry.citeKey.localeCompare(secondEntry.citeKey));
-    return entries;
-  }
-  updateLibraryEntries(data) {
-    return __async(this, null, function* () {
-      const bibtexArray = [];
-      const lastUpdate = new Date(this.settings.lastUpdateDate);
-      for (let index = 0; index < data.items.length; index++) {
-        const selectedEntry = data.items[index];
-        if (selectedEntry.hasOwnProperty("citationKey") == false)
-          continue;
-        const noteDateModifiedArray = [];
-        noteDateModifiedArray.push(selectedEntry.dateModified);
-        if (selectedEntry.notes) {
-          for (let index2 = 0; index2 < selectedEntry.notes.length; index2++) {
-            noteDateModifiedArray.push(selectedEntry.notes[index2].dateModified);
-          }
-        }
-        noteDateModifiedArray.sort((firstElement, secondElement) => {
-          if (firstElement > secondElement)
-            return -1;
-          if (firstElement < secondElement)
-            return 1;
-          return 0;
-        });
-        const datemodified = new Date(noteDateModifiedArray[0]);
-        if (datemodified < lastUpdate)
-          continue;
-        if (this.settings.updateLibrary === "Only update existing notes" && !fs2.existsSync(createNoteTitle(selectedEntry, this.settings.exportTitle, this.settings.exportPath))) {
-          continue;
-        }
-        this.createNote(selectedEntry, data);
-        bibtexArray.push(selectedEntry.citationKey);
-      }
-      this.settings.lastUpdateDate = new Date();
-      yield this.saveSettings();
-      this.refreshLibraryViews();
-      return bibtexArray;
     });
   }
   createFormatting() {
@@ -5102,7 +4470,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     let highlightColouredBefore = "";
     let highlightColouredAfter = "";
     if (isHighlightColoured == true) {
-      highlightColouredBefore = '<mark style="background: SELECTED_COLOUR">';
+      highlightColouredBefore = '<mark style="background: SELECTED_COLOUR>';
       highlightColouredAfter = "</mark>";
     }
     const highlightFormatBefore = highlightHighlighted + highlightColouredBefore + highlightBold + highlightItalic + highlightQuoteOpen;
@@ -5121,7 +4489,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     let commentColouredBefore = "";
     let commentColouredAfter = "";
     if (isCommentColoured == true) {
-      commentColouredBefore = '<mark style="background: SELECTED_COLOUR">';
+      commentColouredBefore = '<mark style="background: SELECTED_COLOUR>';
       commentColouredAfter = "</mark>";
     }
     const commentFormatBefore = commentHighlighted + commentColouredBefore;
@@ -5153,7 +4521,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     let tagColouredBefore = "";
     let tagColouredAfter = "";
     if (isTagColoured == true) {
-      tagColouredBefore = '<mark style="background: SELECTED_COLOUR">';
+      tagColouredBefore = '<mark style="background: SELECTED_COLOUR>';
       tagColouredAfter = "</mark>";
     }
     const tagFormatBefore = tagHash + tagHighlighted + tagColouredBefore + tagBold + tagItalic + tagQuoteOpen;
@@ -5363,7 +4731,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     return noteElements;
   }
   parseAnnotationLinesintoElementsUserNote(note) {
-    const turndownService = new turndown_browser_es_default();
+    const turndownService = new TurndownService();
     note = turndownService.turndown(note);
     note = note.replace(/`/g, "'").replace(/, p. p. /g, ", p. ").trim();
     const lines = note.split(/<\/h1>|\n\n|<\/p>/gm);
@@ -5749,8 +5117,8 @@ var MyPlugin = class extends import_obsidian6.Plugin {
         lineElements.annotationType = "typeExtractedHeading";
       }
       const highlightFormatBeforeColoured = highlightFormatBefore.replace("SELECTED_COLOUR", lineElements.highlightColour + ";");
-      const commentFormatBeforeColoured = commentFormatBefore.replace("SELECTED_COLOUR", lineElements.highlightColour + ";");
-      const tagFormatBeforeColoured = tagFormatBefore.replace("SELECTED_COLOUR", lineElements.highlightColour + ";");
+      const commentFormatBeforeColoured = highlightFormatBefore.replace("SELECTED_COLOUR", lineElements.highlightColour + ";");
+      const tagFormatBeforeColoured = highlightFormatBefore.replace("SELECTED_COLOUR", lineElements.highlightColour + ";");
       if (lineElements.annotationType === "typeExtractedHeading") {
         lineElements.rowEdited = "**" + lineElements.rowOriginal.toUpperCase() + "**";
       }
@@ -5779,11 +5147,11 @@ var MyPlugin = class extends import_obsidian6.Plugin {
           lineElements.inlineTagsArray[index] = lineElements.inlineTagsArray[index].replace(/ /g, "");
         }
       }
-      const TempTag = lineElements.inlineTagsArray.map((i2) => tagPrepend + tagFormatBeforeColoured + i2 + tagFormatAfter);
+      const TempTag = lineElements.inlineTagsArray.map((i2) => tagPrepend + tagFormatBefore + i2 + tagFormatAfter);
       for (let index = 0; index < TempTag.length; index++) {
         TempTag[index] = TempTag[index].replace("##", "#");
       }
-      const TempTagNoPrepend = lineElements.inlineTagsArray.map((i2) => tagFormatBeforeColoured + i2 + tagFormatAfter);
+      const TempTagNoPrepend = lineElements.inlineTagsArray.map((i2) => tagFormatBefore + i2 + tagFormatAfter);
       for (let index = 0; index < TempTagNoPrepend.length; index++) {
         TempTagNoPrepend[index] = TempTagNoPrepend[index].replace("##", "#");
       }
@@ -6362,185 +5730,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
   }
   checkSQLite() {
   }
-  updateCurrentNote() {
-    console.log("Updating Current Note");
-    const jsonPath = this.app.vault.adapter.getBasePath() + "/" + this.settings.bibPath;
-    if (!fs2.existsSync(jsonPath)) {
-      new import_obsidian6.Notice("No BetterBibTex Json file found at " + jsonPath);
-    }
-    const rawdata = fs2.readFileSync(this.app.vault.adapter.getBasePath() + "/" + this.settings.bibPath);
-    const data = JSON.parse(rawdata.toString());
-    const currentNoteName = this.app.workspace.getActiveFile().name;
-    const noteTitleFormat = this.settings.exportTitle + ".md";
-    const citeKey = parseCiteKeyFromNoteName(currentNoteName, noteTitleFormat);
-    if (citeKey != null) {
-      const entryIndex = data.items.findIndex((item) => item.citationKey === citeKey);
-      if (entryIndex != -1) {
-        const currentEntry = data.items[entryIndex];
-        this.createNote(currentEntry, data);
-        new import_obsidian6.Notice("Current Note " + currentNoteName + " updated");
-      } else {
-        new import_obsidian6.Notice("Current Note " + currentNoteName + " not found in the library");
-      }
-    } else {
-      new import_obsidian6.Notice("Cannot find citeKey from Current Note:" + currentNoteName);
-    }
-  }
 };
-function discoverLibraryFieldNames(data) {
-  if (data == null || !Array.isArray(data.items))
-    return [];
-  const fields = new Set();
-  for (const item of data.items) {
-    if (item == null || typeof item !== "object")
-      continue;
-    for (const key of Object.keys(item)) {
-      if (EXCLUDED_DYNAMIC_LIBRARY_FIELDS.has(key))
-        continue;
-      fields.add(key);
-    }
-  }
-  return Array.from(fields).sort((a, b) => a.localeCompare(b));
-}
-function discoverLibrarySubFields(data) {
-  if (data == null || !Array.isArray(data.items))
-    return {};
-  const result = {};
-  for (const item of data.items) {
-    if (item == null || typeof item !== "object")
-      continue;
-    for (const key of Object.keys(item)) {
-      let val = item[key];
-      if (Array.isArray(val) && val.length > 0)
-        val = val[0];
-      if (val != null && typeof val === "object" && !Array.isArray(val)) {
-        if (!result[key])
-          result[key] = new Set();
-        Object.keys(val).forEach((sk) => result[key].add(sk));
-      }
-    }
-  }
-  const finalResult = {};
-  for (const key in result) {
-    finalResult[key] = Array.from(result[key]).sort();
-  }
-  return finalResult;
-}
-function collectLibrarySearchValues(value, results) {
-  if (value == null)
-    return;
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    results.push(String(value));
-    return;
-  }
-  if (Array.isArray(value)) {
-    value.forEach((item) => collectLibrarySearchValues(item, results));
-    return;
-  }
-  if (typeof value === "object") {
-    Object.values(value).forEach((item) => collectLibrarySearchValues(item, results));
-  }
-}
-function normalizeDivider(divider) {
-  if (divider && divider.slice(-1) !== " ")
-    return divider + " ";
-  return divider || "; ";
-}
-function createNotePathShort(selectedEntry, exportTitle, exportPath) {
-  let title = exportTitle;
-  title = title.replace(/\{\{citeKey\}\}/g, selectedEntry.citationKey || "");
-  title = title.replace(/\{\{citationKey\}\}/g, selectedEntry.citationKey || "");
-  title = title.replace(/\{\{title\}\}/g, selectedEntry.title || "");
-  title = title.replace(/\{\{author\}\}/g, selectedEntry.authorKey || "");
-  title = title.replace(/\{\{authors\}\}/g, selectedEntry.authorKey || "");
-  title = title.replace(/\{\{year\}\}/g, selectedEntry.year || "");
-  title = title.replace(/[/\b?%*:|"<>]/g, "");
-  return (0, import_obsidian6.normalizePath)(exportPath + "/" + title + ".md");
-}
-function normalizeItemTypeForLibrary(itemType) {
-  switch (itemType) {
-    case "journalArticle":
-      return "Article";
-    case "book":
-      return "Book";
-    case "bookSection":
-      return "Chapter";
-    case "conferencePaper":
-      return "Conference";
-    case "thesis":
-      return "Thesis";
-    case "webpage":
-      return "Web";
-    case "report":
-      return "Report";
-    default:
-      return itemType ? itemType.charAt(0).toUpperCase() + itemType.slice(1) : "";
-  }
-}
-function normalizeYearForLibrary(date) {
-  if (!date)
-    return "";
-  const match = date.match(/\d{4}/);
-  return match ? match[0] : "";
-}
-function getTagsForLibraryEntry(entry) {
-  if (!entry.tags || !Array.isArray(entry.tags))
-    return [];
-  return entry.tags.map((t) => t.tag || t).filter((t) => !!t);
-}
-function formatPrimaryCreatorListForLibrary(creators, divider, nameFormat) {
-  if (!creators || creators.length === 0)
-    return "";
-  const list = creators.filter((c) => c.creatorType === "author" || c.creatorType === "editor").map((c) => {
-    if (c.name)
-      return c.name;
-    let name = nameFormat;
-    name = name.replace("{{lastName}}", c.lastName || "");
-    name = name.replace("{{firstName}}", c.firstName || "");
-    return name.trim();
-  });
-  if (list.length === 0)
-    return "";
-  if (list.length === 1)
-    return list[0];
-  if (list.length === 2)
-    return list[0] + divider + list[1];
-  return list[0] + " et al.";
-}
-function formatLibraryFieldValue(value, divider, mappingProperty) {
-  if (value == null)
-    return "";
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    let str = String(value);
-    if (typeof value === "string") {
-      str = str.replace(/<\/?[^>]+(>|$)/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
-    }
-    return str.trim();
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => formatLibraryFieldValue(item, divider, mappingProperty)).filter((item) => item !== "").join(divider);
-  }
-  if (typeof value === "object") {
-    if (typeof value.firstName === "string" || typeof value.lastName === "string") {
-      return [value.firstName || "", value.lastName || ""].join(" ").trim();
-    }
-    if (mappingProperty && (typeof value[mappingProperty] === "string" || typeof value[mappingProperty] === "number")) {
-      return formatLibraryFieldValue(value[mappingProperty], divider, mappingProperty);
-    }
-    const candidateKeys = ["note", "path", "tag", "name", "title", "label", "key", "citationKey", "itemKey", "uri", "url"];
-    for (const key of candidateKeys) {
-      if (typeof value[key] === "string" || typeof value[key] === "number") {
-        return formatLibraryFieldValue(value[key], divider, mappingProperty);
-      }
-    }
-    try {
-      return JSON.stringify(value);
-    } catch (error) {
-      return "";
-    }
-  }
-  return "";
-}
 /*!
  * color-classifier
  * Classify the color along the reference color.

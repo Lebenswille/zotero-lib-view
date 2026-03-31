@@ -1,0 +1,237 @@
+
+
+export interface MyPluginSettings {
+	bibPath: string;
+	autoImportOnBibChange: boolean;
+	libraryViewColumns: string[];
+	templateContent: string;
+	templatePath: string;
+	templateType: string;
+	exportPath: string;
+	exportTitle: string;
+	missingfield: string;
+	saveManualEdits: string;
+	saveManualEditsStart: string;
+	saveManualEditsEnd: string;
+	imagesImport: boolean;
+	imagesCopy: boolean;
+	imagesPath: string;
+	imagesCommentPosition: string;
+	keyMergeAbove: string;
+	keyCommentPrepend: string;
+	commentPrependDefault: boolean;
+	TagBeginningConfig: string;
+	TagEndConfig: string;
+	TagDividerConfig: string;
+	keyH1: string;
+	keyH2: string;
+	keyH3: string;
+	keyH4: string;
+	keyH5: string;
+	keyH6: string;
+	keyKeyword: string;
+	keyTask: string;
+	lastUpdateDate: Date;
+	updateLibrary: string;
+	isHighlightItalic: boolean;
+	isHighlightBold: boolean;
+	isHighlightHighlighted: boolean;
+	isHighlightColoured: boolean;
+	isHighlightBullet: boolean;
+	isHighlightBlockquote: boolean;
+	isHighlightQuote: boolean;
+	highlightCustomTextBefore: string;
+	highlightCustomTextAfter: string;
+	isCommentItalic: boolean;
+	isCommentBold: boolean;
+	isCommentHighlighted: boolean;
+	isCommentColoured: boolean;
+	isCommentBullet: boolean;
+	isCommentBlockquote: boolean;
+	isCommentQuote: boolean;
+	commentCustomTextBefore: string;
+	commentCustomTextAfter: string;
+	isTagItalic: boolean;
+	isTagBold: boolean;
+	isTagHighlighted: boolean;
+	isTagColoured: boolean;
+	isTagBullet: boolean;
+	isTagBlockquote: boolean;
+	isTagQuote: boolean;
+	isTagHash: boolean;
+	tagCustomTextBefore: string;
+	tagCustomTextAfter: string;
+	tagCustomTextBeforeFirst: string;
+	tagCustomTextAfterLast: string;
+	isDoubleSpaced: boolean;
+	highlightExportTemplate: string;
+	colourYellowText: string;
+	colourPurpleText: string;
+	colourRedText: string;
+	colourGreenText: string;
+	colourBlueText: string;
+	colourBlackText: string;
+	colourWhiteText: string;
+	colourGrayText: string;
+	colourOrangeText: string;
+	colourCyanText: string;
+	colourMagentaText: string;
+	colourCustomHexValue: string;
+	colourCustomHexText: string;
+	multipleFieldsDivider: string;
+	nameFormat: string;
+	highlightCitationsFormat: string;
+	highlightCitationsLink: boolean;
+	debugMode: boolean;
+	zoteroStoragePathManual: string;
+	missingfieldreplacement: string;
+	// added mapping for columns
+	fieldPropertyMapping?: Record<string, string>;
+}
+
+export interface Reference {
+	authorKey: string;
+	authorKeyInitials: string;
+	authorKeyFullName: string;
+	id: number;
+	citationKey: string;
+	citeKey: string;
+	year: string;
+	citationInLine: string;
+	citationInLineInitials: string;
+	citationInLineFullName: string;
+	citationShort: string;
+	citationFull: string;
+	itemType: string;
+	inlineReference: string;
+	date: string;
+	dateModified: string;
+	dateAdded: string; // added
+	itemKey: string;
+	itemID: number;
+	title: string;
+	publicationTitle: string;
+	volume: number;
+	issue: number;
+	pages: string;
+	creators: {
+		creatorType: string;
+		firstName: string;
+		lastName: string;
+		name: string;
+	}[];
+	file: string;
+	filePath: string;
+	zoteroReaderLink: string;
+	localLibrary: string;
+	localLibraryLink: string;
+	select: string;
+	attachments: {
+		dateAdded: string;
+		dateModified: string;
+		itemType: string;
+		path: string;
+		relations: string[];
+		select: string;
+		tags: string[];
+		title: string;
+		uri: string;
+		contentType?: string; // added
+	}[];
+	notes: {
+		dateAdded: string;
+		dateModified: string;
+		itemType: string;
+		key: string;
+		note: string;
+		parentItem: string; // changed from "VMSSFNIR" to string
+		relations: string[];
+		tags: string[];
+		uri: string;
+		version: number;
+	}[];
+	tags: {
+		tag: string;
+	}[];
+	zoteroTags: string[];
+	uri: string; // added
+}
+
+export interface LibraryEntry {
+	citeKey: string;
+	year: string;
+	itemType: string;
+	title: string;
+	authors: string;
+	publication: string;
+	tags: string;
+	tagsArray: string[];
+	dateAdded: string;
+	dateAddedShort: string;
+	url: string;
+	zoteroLink: string;
+	pdfLink: string;
+	pdfName: string;
+	rawEntry: Reference;
+	rawData: BibData;
+	notePathShort: string;
+	noteFile: any; // Use TFile from obsidian if imported
+	customFieldValues: Record<string, string>;
+	searchText: string;
+}
+
+export interface BibData {
+	items: Reference[];
+	collections?: Collection[];
+}
+
+export interface AnnotationElements {
+	annotationType: string;
+	citeKey: string;
+	commentText: string;
+	commentFormatted: string;
+	commentFormattedNoPrepend: string;
+	highlightText: string;
+	highlightColour: string;
+	highlightFormatted: string;
+	highlightFormattedNoPrepend: string;
+	inlineTagsText: string;
+	inlineTagsArray: string[];
+	inlineTagsFormatted: string;
+	inlineTagsFormattedNoPrepend: string;
+	indexNote: number;
+	rowOriginal: string;
+	rowEdited: string;
+	foundOld: boolean;
+	positionOld: number;
+	extractionSource: string;
+	colourTemplate: string;
+	colourTemplateFormatted: string;
+	colourTemplateNoPrepend: string;
+	colourTextBefore: string;
+	colourTextAfter: string;
+	imagePath: string;
+	pagePDF: number;
+	pageLabel: number;
+	attachmentURI: string;
+	zoteroBackLink: string;
+	annotationKey: string;
+}
+[];
+
+export interface Creator {
+	creatorType: string;
+	firstName: string;
+	lastName: string;
+	name: string;
+}
+
+export interface Collection {
+	collections: string[];
+	items: string[];
+	key: string;
+	name: string;
+	parent: string;
+}
+
+export type CreatorArray = Array<Creator>;

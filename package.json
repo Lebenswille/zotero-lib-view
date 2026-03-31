@@ -1,0 +1,33 @@
+{
+	"name": "bibnotes",
+	"version": "0.9.219",
+	"description": "Plugin to export and format annotations from Zotero into Obsidian",
+	"main": "main.js",
+	"scripts": {
+		"dev": "node esbuild.config.mjs",
+		"build": "node esbuild.config.mjs production"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/better-sqlite3": "^7.5.0",
+		"@types/node": "^16.11.10",
+		"@typescript-eslint/eslint-plugin": "^5.2.0",
+		"@typescript-eslint/parser": "^5.2.0",
+		"builtin-modules": "^3.2.0",
+		"esbuild": "^0.13.15",
+		"obsidian": "^0.12.17",
+		"tslib": "2.3.1",
+		"typescript": "^4.4.4"
+	},
+	"dependencies": {
+		"@popperjs/core": "^2.11.2",
+		"color-classifier": "^0.0.1",
+		"debugout.js": "^1.0.0",
+		"loglevel": "^1.8.0",
+		"node": "^17.2.0",
+		"tslint": "^6.1.3",
+		"turndown": "^7.1.1"
+	}
+}

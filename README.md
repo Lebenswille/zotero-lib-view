@@ -35,8 +35,6 @@ This version introduces a **library-first workflow** and several quality-of-life
 2. Unzip or clone the release into your vault's `.obsidian/plugins/zotero-library-in-obsidian/` directory.
 3. Enable "Zotero Library in Obsidian" in the Community plugins settings.
 
-![](images/Plugin_Installation.png)
-
 ### Via BRAT
 If you have the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat/) installed:
 1. Use `Lebenswille/zotero-library-in-obsidian` to add it as a Beta plugin.

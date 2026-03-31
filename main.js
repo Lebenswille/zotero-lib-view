@@ -4808,14 +4808,15 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
             if (field === "Actions") {
               const actionsCell = row.insertCell();
               actionsCell.addClass("zotero-library-actions");
-              const noteButton = actionsCell.createEl("button", { text: entry.noteFile != void 0 ? "Note" : "Create Note" });
-              noteButton.addEventListener("click", () => {
-                this.plugin.openOrCreateLibraryEntryNote(entry);
-              });
-              if (entry.zoteroLink !== "") {
-                const zoteroButton = actionsCell.createEl("button", { text: "Zotero" });
-                zoteroButton.addEventListener("click", () => {
-                  window.open(entry.zoteroLink, "_blank");
+              if (entry.pdfLink !== "") {
+                const pdfButton = actionsCell.createEl("button", { text: "PDF" });
+                pdfButton.addEventListener("click", () => {
+                  const pdfFile = (entry.pdfName && this.plugin.app.metadataCache.getFirstLinkpathDest(entry.pdfName, "")) || this.plugin.app.metadataCache.getFirstLinkpathDest(entry.citeKey + ".pdf", "");
+                  if (pdfFile) {
+                    this.plugin.app.workspace.getLeaf(true).openFile(pdfFile);
+                  } else {
+                    window.open(entry.pdfLink, "_blank");
+                  }
                 });
               }
               if (entry.url !== "") {
@@ -4824,6 +4825,16 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
                   window.open(entry.url, "_blank");
                 });
               }
+              if (entry.zoteroLink !== "") {
+                const zoteroButton = actionsCell.createEl("button", { text: "Zotero" });
+                zoteroButton.addEventListener("click", () => {
+                  window.open(entry.zoteroLink, "_blank");
+                });
+              }
+              const noteButton = actionsCell.createEl("button", { text: entry.noteFile != void 0 ? "Note" : "Create" });
+              noteButton.addEventListener("click", () => {
+                this.plugin.openOrCreateLibraryEntryNote(entry);
+              });
               return;
             }
             row.insertCell().setText((entry.customFieldValues || {})[field] || "");
@@ -5216,6 +5227,8 @@ var MyPlugin = class extends import_obsidian6.Plugin {
         dateAddedShort: selectedEntry.dateAdded ? String(selectedEntry.dateAdded).slice(0, 10) : "",
         url: selectedEntry.url || "",
         zoteroLink: selectedEntry.select || selectedEntry.uri || "",
+        pdfLink: (((selectedEntry.attachments || []).find((a) => (a.contentType === "application/pdf" || (a.path && a.path.toLowerCase().endsWith(".pdf"))) && a.select) || {}).select || "").replace("select", "open-pdf"),
+        pdfName: (((selectedEntry.attachments || []).find((a) => (a.contentType === "application/pdf" || (a.path && a.path.toLowerCase().endsWith(".pdf")))) || {}).path || "").split("/").pop().split("\\").pop(),
         rawEntry: selectedEntry,
         rawData: data,
         notePathShort,

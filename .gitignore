@@ -1,3 +1,16 @@
-data.json
-.DS_Store
+# vscode
+.vscode 
+
+# Intellij
+*.iml
+.idea
+
+# npm
 node_modules
+package-lock.json
+
+# Exclude sourcemaps
+*.map
+
+# obsidian
+data.json

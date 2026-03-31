@@ -1534,7 +1534,8 @@ var DEFAULT_SETTINGS = {
   highlightCitationsLink: true,
   debugMode: false,
   zoteroStoragePathManual: "",
-  missingfieldreplacement: "NA"
+  missingfieldreplacement: "NA",
+  fieldPropertyMapping: { notes: "note", attachments: "path" }
 };
 var HeaderLevels;
 (function (HeaderLevels2) {
@@ -2022,24 +2023,31 @@ function createNotePathShort(selectedEntry, exportTitle, exportPath) {
   exportTitle = exportTitle.replace(/[/\\?%*:|"<>]/g, "");
   return (0, import_obsidian.normalizePath)(`${exportPath}/${exportTitle}.md`);
 }
-function formatLibraryFieldValue(value, divider) {
+function formatLibraryFieldValue(value, divider, mappingProperty) {
   if (value == null) {
     return "";
   }
   if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    return String(value);
+    let str = String(value);
+    if (typeof value === "string") {
+      str = str.replace(/<\/?[^>]+(>|$)/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
+    }
+    return str.trim();
   }
   if (Array.isArray(value)) {
-    return value.map((item) => formatLibraryFieldValue(item, divider)).filter((item) => item !== "").join(divider);
+    return value.map((item) => formatLibraryFieldValue(item, divider, mappingProperty)).filter((item) => item !== "").join(divider);
   }
   if (typeof value === "object") {
     if (typeof value.firstName === "string" || typeof value.lastName === "string") {
       return [value.firstName || "", value.lastName || ""].join(" ").trim();
     }
-    const candidateKeys = ["tag", "name", "title", "label", "path", "key", "citationKey", "itemKey", "uri", "url"];
+    if (mappingProperty && (typeof value[mappingProperty] === "string" || typeof value[mappingProperty] === "number")) {
+      return formatLibraryFieldValue(value[mappingProperty], divider, mappingProperty);
+    }
+    const candidateKeys = ["note", "path", "tag", "name", "title", "label", "key", "citationKey", "itemKey", "uri", "url"];
     for (const key of candidateKeys) {
       if (typeof value[key] === "string" || typeof value[key] === "number") {
-        return String(value[key]);
+        return formatLibraryFieldValue(value[key], divider, mappingProperty);
       }
     }
     try {
@@ -2067,6 +2075,32 @@ function discoverLibraryFieldNames(data) {
     }
   }
   return Array.from(fields).sort((firstField, secondField) => firstField.localeCompare(secondField));
+}
+function discoverLibrarySubFields(data) {
+  if (data == null || !Array.isArray(data.items)) {
+    return {};
+  }
+  const result = {};
+  for (const item of data.items) {
+    if (item == null || typeof item !== "object") {
+      continue;
+    }
+    for (const key of Object.keys(item)) {
+      let val = item[key];
+      if (Array.isArray(val) && val.length > 0)
+        val = val[0];
+      if (val != null && typeof val === "object" && !Array.isArray(val)) {
+        if (!result[key])
+          result[key] = /* @__PURE__ */ new Set();
+        Object.keys(val).forEach((sk) => result[key].add(sk));
+      }
+    }
+  }
+  const finalResult = {};
+  for (const key in result) {
+    finalResult[key] = Array.from(result[key]).sort();
+  }
+  return finalResult;
 }
 function collectLibrarySearchValues(value, results) {
   if (value == null) {
@@ -4042,26 +4076,60 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
       plugin.refreshLibraryViews();
       renderLibraryColumnsEditor();
     });
+    const silentSaveLibraryColumns = (columns) => __async(this, null, function* () {
+      settings.libraryViewColumns = plugin.parseLibraryViewColumns(columns.join(","));
+      yield plugin.saveSettings();
+      plugin.refreshLibraryViews();
+    });
     const renderLibraryColumnsEditor = () => {
       libraryColumnsContainer.empty();
       const availableColumns = plugin.getAvailableLibraryViewColumns();
       const currentColumns = plugin.getLibraryViewColumns().slice();
-    new import_obsidian5.Setting(libraryColumnsContainer).setName("Library View Columns").setDesc("Choose which columns appear in the Zotero Library in Obsidian view, reorder them, and include fields discovered automatically from your BetterBibTex JSON.");
-      currentColumns.forEach((column, index) => {
-        new import_obsidian5.Setting(libraryColumnsContainer).setName(`Column ${index + 1}`).addDropdown((dropdown) => {
+      new import_obsidian5.Setting(libraryColumnsContainer).setName("Library View Columns").setDesc("Customize each column: [Title] [Source Field] [Sub-Property]. Example: My Notes | notes | note");
+      currentColumns.forEach((columnString, index) => {
+        const parts = columnString.split("|");
+        const displayName = parts[0];
+        const fieldName = parts[1] || displayName;
+        const subProperty = parts[2] || "";
+        const setting = new import_obsidian5.Setting(libraryColumnsContainer).setName(`Column ${index + 1}`);
+        setting.addText((text) => {
+          text.setPlaceholder("Title").setValue(displayName).onChange((val) => __async(this, null, function* () {
+            parts[0] = val;
+            currentColumns[index] = parts.join("|");
+            yield silentSaveLibraryColumns(currentColumns);
+          }));
+          text.inputEl.addEventListener("blur", () => {
+            renderLibraryColumnsEditor();
+          });
+        });
+        setting.addDropdown((dropdown) => {
           availableColumns.forEach((option) => {
             dropdown.addOption(option, option);
           });
-          dropdown.setValue(column);
+          dropdown.setValue(fieldName);
           dropdown.onChange((value) => __async(this, null, function* () {
-            currentColumns[index] = value;
+            parts[1] = value;
+            currentColumns[index] = parts.join("|");
             yield saveLibraryColumns(currentColumns);
           }));
-        }).addExtraButton((button) => {
+        });
+        setting.addDropdown((dropdown) => {
+          const subs = (plugin.discoveredSubFields || {})[fieldName] || [];
+          dropdown.addOption("", "- none -");
+          subs.forEach((option) => {
+            dropdown.addOption(option, option);
+          });
+          dropdown.setValue(subProperty);
+          dropdown.onChange((value) => __async(this, null, function* () {
+            parts[2] = value;
+            currentColumns[index] = [parts[0], parts[1] || parts[0], value].join("|");
+            yield saveLibraryColumns(currentColumns);
+          }));
+        });
+        setting.addExtraButton((button) => {
           button.setIcon("arrow-up").setTooltip("Move up").setDisabled(index === 0).onClick(() => __async(this, null, function* () {
-            if (index === 0) {
+            if (index === 0)
               return;
-            }
             const nextColumns = currentColumns.slice();
             const previousValue = nextColumns[index - 1];
             nextColumns[index - 1] = nextColumns[index];
@@ -4070,9 +4138,8 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
           }));
         }).addExtraButton((button) => {
           button.setIcon("arrow-down").setTooltip("Move down").setDisabled(index === currentColumns.length - 1).onClick(() => __async(this, null, function* () {
-            if (index === currentColumns.length - 1) {
+            if (index === currentColumns.length - 1)
               return;
-            }
             const nextColumns = currentColumns.slice();
             const nextValue = nextColumns[index + 1];
             nextColumns[index + 1] = nextColumns[index];
@@ -4081,9 +4148,8 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
           }));
         }).addExtraButton((button) => {
           button.setIcon("cross").setTooltip("Remove column").setDisabled(currentColumns.length <= 1).onClick(() => __async(this, null, function* () {
-            if (currentColumns.length <= 1) {
+            if (currentColumns.length <= 1)
               return;
-            }
             const nextColumns = currentColumns.filter((_, currentIndex) => currentIndex !== index);
             yield saveLibraryColumns(nextColumns);
           }));
@@ -4091,8 +4157,7 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
       });
       new import_obsidian5.Setting(libraryColumnsContainer).addButton((button) => {
         button.setButtonText("Add Column").onClick(() => __async(this, null, function* () {
-          const nextColumn = availableColumns.find((option) => !currentColumns.includes(option)) || availableColumns[0];
-          const nextColumns = currentColumns.concat([nextColumn]);
+          const nextColumns = currentColumns.concat(["New Column"]);
           yield saveLibraryColumns(nextColumns);
         }));
       }).addExtraButton((button) => {
@@ -4105,6 +4170,8 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
       });
     };
     renderLibraryColumnsEditor();
+    
+
     containerEl.createEl("h2", { text: "Export Notes" });
     const settingsExport = containerEl.createEl("details");
     settingsExport.setAttribute("open", "");
@@ -4656,24 +4723,27 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
           indicator.setText(this.sortColumn === column ? this.sortDirection === "asc" ? "↑" : "↓" : "");
         });
       };
-      visibleColumns.forEach((label) => {
+      visibleColumns.forEach((columnString) => {
+        const parts = columnString.split("|");
+        const label = parts[0];
+        const field = parts[1] || label;
         const th = headRow.createEl("th");
         th.addClass("zotero-library-sortable");
         const headerLabel = th.createDiv({ cls: "zotero-library-sort-label" });
         headerLabel.createSpan({ cls: "zotero-library-sort-text", text: label });
         const indicator = headerLabel.createSpan({
           cls: "zotero-library-sort-indicator",
-          text: this.sortColumn === label ? this.sortDirection === "asc" ? "↑" : "↓" : ""
+          text: this.sortColumn === columnString ? this.sortDirection === "asc" ? "↑" : "↓" : ""
         });
-        sortIndicators[label] = indicator;
+        sortIndicators[columnString] = indicator;
         th.setAttr("role", "button");
         th.setAttr("tabindex", "0");
         const sortHandler = () => {
-          if (this.sortColumn === label) {
+          if (this.sortColumn === columnString) {
             this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc";
           } else {
-            this.sortColumn = label;
-            this.sortDirection = label === "Added" ? "desc" : "asc";
+            this.sortColumn = columnString;
+            this.sortDirection = columnString.includes("Added") ? "desc" : "asc";
           }
           updateSortIndicators();
           renderRows(searchInput.value);
@@ -4694,8 +4764,11 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
         filteredEntries.sort((firstEntry, secondEntry) => this.plugin.compareLibraryEntries(firstEntry, secondEntry, this.sortColumn, this.sortDirection));
         filteredEntries.forEach((entry) => {
           const row = tbody.insertRow();
-          visibleColumns.forEach((column) => {
-            if (column === "Obsidian Notes") {
+          visibleColumns.forEach((columnString) => {
+            const parts = columnString.split("|");
+            const label = parts[0];
+            const field = parts[1] || label;
+            if (field === "Obsidian Notes") {
               const citeCell = row.insertCell();
               const noteLink = citeCell.createEl("a", { text: entry.citeKey, href: "#" });
               noteLink.addEventListener("click", (event) => {
@@ -4704,35 +4777,35 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
               });
               return;
             }
-            if (column === "Year") {
+            if (field === "Year") {
               row.insertCell().setText(entry.year);
               return;
             }
-            if (column === "Type") {
+            if (field === "Type") {
               row.insertCell().setText(entry.itemType);
               return;
             }
-            if (column === "Title") {
+            if (field === "Title") {
               row.insertCell().setText(entry.title);
               return;
             }
-            if (column === "Authors") {
+            if (field === "Authors") {
               row.insertCell().setText(entry.authors);
               return;
             }
-            if (column === "Publication") {
+            if (field === "Publication") {
               row.insertCell().setText(entry.publication);
               return;
             }
-            if (column === "Tags") {
+            if (field === "Tags") {
               row.insertCell().setText(entry.tags);
               return;
             }
-            if (column === "Added") {
+            if (field === "Added") {
               row.insertCell().setText(entry.dateAddedShort);
               return;
             }
-            if (column === "Actions") {
+            if (field === "Actions") {
               const actionsCell = row.insertCell();
               actionsCell.addClass("zotero-library-actions");
               const noteButton = actionsCell.createEl("button", { text: entry.noteFile != void 0 ? "Note" : "Create Note" });
@@ -4753,7 +4826,7 @@ var BibNotesLibraryView = class extends import_obsidian6.ItemView {
               }
               return;
             }
-            row.insertCell().setText((entry.customFieldValues || {})[column] || "");
+            row.insertCell().setText((entry.customFieldValues || {})[field] || "");
           });
         });
       };
@@ -4843,6 +4916,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     return __async(this, null, function* () {
       this.settings = Object.assign({}, DEFAULT_SETTINGS, yield this.loadData());
       this.discoveredLibraryFields = [];
+      this.discoveredSubFields = {};
     });
   }
   saveSettings() {
@@ -4896,21 +4970,14 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     (_a = actionsEl.firstChild) != null ? actionsEl.insertBefore(buttonContainer, actionsEl.firstChild) : actionsEl.appendChild(buttonContainer);
   }
   parseLibraryViewColumns(value) {
-    const availableColumns = this.getAvailableLibraryViewColumns();
-    const normalizedMap = {};
-    availableColumns.forEach((column) => {
-      normalizedMap[column.toLowerCase()] = column;
-    });
-    normalizedMap["collections"] = "Tags";
-    const parsed = String(value || "").split(",").map((column) => column.trim()).filter((column) => column !== "").map((column) => normalizedMap[column.toLowerCase()]).filter((column, index, array) => column != void 0 && array.indexOf(column) === index);
+    const parsed = String(value || "").split(",").map((column) => column.trim()).filter((column) => column !== "");
     if (parsed.length > 0) {
       return parsed;
     }
     return BUILT_IN_LIBRARY_COLUMNS.slice();
   }
   getAvailableLibraryViewColumns() {
-    const configuredColumns = Array.isArray(this.settings.libraryViewColumns) ? this.settings.libraryViewColumns : typeof this.settings.libraryViewColumns === "string" ? this.settings.libraryViewColumns.split(",").map((column) => column.trim()).filter((column) => column !== "") : [];
-    return Array.from(new Set(BUILT_IN_LIBRARY_COLUMNS.concat(this.discoveredLibraryFields || []).concat(configuredColumns)));
+    return Array.from(new Set(BUILT_IN_LIBRARY_COLUMNS.concat(this.discoveredLibraryFields || [])));
   }
   getLibraryViewColumns() {
     const configuredColumns = this.settings.libraryViewColumns;
@@ -4923,39 +4990,42 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     return this.getAvailableLibraryViewColumns();
   }
   compareLibraryEntries(firstEntry, secondEntry, column, direction) {
+    const parts = column.split("|");
+    const label = parts[0];
+    const field = parts[1] || label;
     const directionFactor = direction === "desc" ? -1 : 1;
     let firstValue = "";
     let secondValue = "";
-    if (column === "Obsidian Notes") {
+    if (field === "Obsidian Notes") {
       firstValue = firstEntry.citeKey;
       secondValue = secondEntry.citeKey;
-    } else if (column === "Year") {
+    } else if (field === "Year") {
       firstValue = firstEntry.year;
       secondValue = secondEntry.year;
-    } else if (column === "Type") {
+    } else if (field === "Type") {
       firstValue = firstEntry.itemType;
       secondValue = secondEntry.itemType;
-    } else if (column === "Title") {
+    } else if (field === "Title") {
       firstValue = firstEntry.title;
       secondValue = secondEntry.title;
-    } else if (column === "Authors") {
+    } else if (field === "Authors") {
       firstValue = firstEntry.authors;
       secondValue = secondEntry.authors;
-    } else if (column === "Publication") {
+    } else if (field === "Publication") {
       firstValue = firstEntry.publication;
       secondValue = secondEntry.publication;
-    } else if (column === "Tags") {
+    } else if (field === "Tags") {
       firstValue = firstEntry.tags;
       secondValue = secondEntry.tags;
-    } else if (column === "Added") {
+    } else if (field === "Added") {
       firstValue = firstEntry.dateAdded;
       secondValue = secondEntry.dateAdded;
-    } else if (column === "Actions") {
+    } else if (field === "Actions") {
       firstValue = firstEntry.noteFile != null ? "0" : "1";
       secondValue = secondEntry.noteFile != null ? "0" : "1";
     } else {
-      firstValue = (firstEntry.customFieldValues || {})[column] || "";
-      secondValue = (secondEntry.customFieldValues || {})[column] || "";
+      firstValue = (firstEntry.customFieldValues || {})[field] || "";
+      secondValue = (secondEntry.customFieldValues || {})[field] || "";
     }
     const normalizedFirst = String(firstValue || "").toLowerCase();
     const normalizedSecond = String(secondValue || "").toLowerCase();
@@ -5059,6 +5129,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
         const rawdata = yield this.app.vault.adapter.read(bibPath);
         const data = JSON.parse(rawdata);
         this.discoveredLibraryFields = discoverLibraryFieldNames(data);
+        this.discoveredSubFields = discoverLibrarySubFields(data);
         return data;
       } catch (error) {
         console.log(error);
@@ -5066,6 +5137,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
           new import_obsidian6.Notice("Failed to read BetterBibTex Json file");
         }
         this.discoveredLibraryFields = [];
+        this.discoveredSubFields = {};
         return void 0;
       }
     });
@@ -5120,8 +5192,16 @@ var MyPlugin = class extends import_obsidian6.Plugin {
       const customFieldValues = {};
       const searchValues = [];
       collectLibrarySearchValues(selectedEntry, searchValues);
+      const fieldMappings = {};
+      this.settings.libraryViewColumns.forEach((col) => {
+        const parts = col.split("|");
+        if (parts.length >= 3 && parts[2]) {
+          fieldMappings[parts[1] || parts[0]] = parts[2];
+        }
+      });
       (this.discoveredLibraryFields || []).forEach((field) => {
-        customFieldValues[field] = formatLibraryFieldValue(selectedEntry[field], divider);
+        const mappingProperty = fieldMappings[field] || (this.settings.fieldPropertyMapping || {})[field];
+        customFieldValues[field] = formatLibraryFieldValue(selectedEntry[field], divider, mappingProperty);
       });
       entries.push({
         citeKey: selectedEntry.citationKey,

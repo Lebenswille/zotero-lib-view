@@ -1,5 +1,5 @@
 {
-	"name": "zotero-library-in-obsidian",
+	"name": "Zotero Library in Obsidian",
 	"version": "1.2.2",
 	"description": "Plugin to export and format annotations from Zotero into Obsidian",
 	"main": "main.js",

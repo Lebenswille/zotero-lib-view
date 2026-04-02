@@ -3799,7 +3799,7 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
     const { containerEl, plugin } = this;
     const { settings } = plugin;
     containerEl.empty();
-    containerEl.createEl("h1", { text: "zotero-library-in-obsidian" });
+    containerEl.createEl("h1", { text: "Zotero Library in Obsidian" });
     containerEl.createEl("a", { text: "Created by Lebenswille", href: "https://github.com/Lebenswille/zotero-library-in-obsidian" });
     containerEl.createEl("h2", { text: "Import Library" });
     const importLibrary = containerEl.createEl("details");
@@ -4405,7 +4405,7 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
     return ZOTERO_LIBRARY_VIEW_TYPE;
   }
   getDisplayText() {
-    return "zotero-library-in-obsidian";
+    return "Zotero Library in Obsidian";
   }
   getIcon() {
     return "library";
@@ -4426,13 +4426,13 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
       container.addClass("zotero-library-view");
       const data = yield this.plugin.loadBibData(true);
       if (data == null) {
-        container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the zotero-library-in-obsidian settings." });
+        container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the Zotero Library in Obsidian settings." });
         return;
       }
       const entries = this.plugin.buildLibraryEntries(data);
       const header = container.createDiv({ cls: "zotero-library-header" });
       const titleWrap = header.createDiv({ cls: "zotero-library-title-wrap" });
-      titleWrap.createEl("h2", { text: "Zotero Library" });
+      titleWrap.createEl("h2", { text: "Zotero Library in Obsidian" });
       titleWrap.createEl("p", {
         text: `Source: ${this.plugin.settings.bibPath || "My Library.json"}`
       });
@@ -4895,11 +4895,11 @@ var MyPlugin = class extends import_obsidian6.Plugin {
           return;
         const updatedEntries = yield this.updateLibraryEntries(data);
         if (updatedEntries.length > 0) {
-          new import_obsidian6.Notice(`zotero-library-in-obsidian auto-imported ${updatedEntries.length} updated reference(s)`);
+          new import_obsidian6.Notice(`Zotero Library in Obsidian auto-imported ${updatedEntries.length} updated reference(s)`);
         }
       } catch (error) {
         console.log(error);
-        new import_obsidian6.Notice("zotero-library-in-obsidian auto-import failed");
+        new import_obsidian6.Notice("Zotero Library in Obsidian auto-import failed");
       } finally {
         this.isAutoImportRunning = false;
       }

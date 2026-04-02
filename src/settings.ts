@@ -16,7 +16,7 @@ export class SettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h1', { text: 'zotero-library-in-obsidian' });
+		containerEl.createEl('h1', { text: 'Zotero Library in Obsidian' });
 		containerEl.createEl('a', { text: 'Created by Lebenswille', href: 'https://github.com/Lebenswille/zotero-library-in-obsidian' });
 		containerEl.createEl('h2', { text: 'Import Library' });
 

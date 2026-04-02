@@ -74,7 +74,7 @@ class ZoteroLibraryView extends ItemView {
 	}
 
 	getDisplayText() {
-		return "zotero-library-in-obsidian";
+		return "Zotero Library in Obsidian";
 	}
 
 	getIcon() {
@@ -94,7 +94,7 @@ class ZoteroLibraryView extends ItemView {
 
 		const data: any = await this.plugin.loadBibData(true);
 		if (data == null) {
-			container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the zotero-library-in-obsidian settings." });
+			container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the Zotero Library in Obsidian settings." });
 			return;
 		}
 
@@ -102,7 +102,7 @@ class ZoteroLibraryView extends ItemView {
 
 		const header = container.createDiv({ cls: "zotero-library-header" });
 		const titleWrap = header.createDiv({ cls: "zotero-library-title-wrap" });
-		titleWrap.createEl("h2", { text: "Zotero Library" });
+		titleWrap.createEl("h2", { text: "Zotero Library in Obsidian" });
 		titleWrap.createEl("p", {
 			text: `Source: ${this.plugin.settings.bibPath || "My Library.json"}`,
 		});
@@ -632,11 +632,11 @@ export default class MyPlugin extends Plugin {
 
 			const updatedEntries = await this.updateLibraryEntries(data);
 			if (updatedEntries.length > 0) {
-				new Notice(`zotero-library-in-obsidian auto-imported ${updatedEntries.length} updated reference(s)`);
+				new Notice(`Zotero Library in Obsidian auto-imported ${updatedEntries.length} updated reference(s)`);
 			}
 		} catch (error) {
 			console.log(error);
-			new Notice("zotero-library-in-obsidian auto-import failed");
+			new Notice("Zotero Library in Obsidian auto-import failed");
 		} finally {
 			this.isAutoImportRunning = false;
 		}

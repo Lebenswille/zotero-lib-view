@@ -29,18 +29,36 @@ export class SettingTab extends PluginSettingTab {
 		new Setting(importLibrary)
 			.setName("BetterBibTex Json File")
 			.setDesc("Add relative path from the vault folder to the *BetterBibTex Json* file to be imported. For instance, add `library.json` if the file (library.json) is in the root folder. Instead, if the file is in a subfolder, specify first the subfolder followed by the name of the file (e.g. 'zotero/library.json' if the json file is located in a subfolder of your vault called 'zotero') ")
-			.addText((text) =>
+			.addText((text) => {
+				let lastSavedBibPath = settings.bibPath;
+
+				const persistBibPath = async () => {
+					const nextBibPath = text.getValue();
+					if (lastSavedBibPath === nextBibPath) return;
+					plugin.settings.bibPath = nextBibPath;
+					await plugin.saveSettings();
+					await plugin.refreshDiscoveredLibraryFields(true);
+					lastSavedBibPath = nextBibPath;
+					this.display();
+				};
+
 				text
 					.setPlaceholder("/path/to/BetterBibTex.json")
 					.setValue(settings.bibPath)
-					.onChange(async (value) => {
-						console.log("Path Bib: " + value);
-						settings.bibPath = value;
-						await plugin.saveSettings();
-                        await plugin.refreshDiscoveredLibraryFields(true);
-                        this.display();
-					})
-			);
+					.onChange((value) => {
+						plugin.settings.bibPath = value;
+					});
+
+				text.inputEl.addEventListener("blur", () => {
+					void persistBibPath();
+				});
+
+				text.inputEl.addEventListener("keydown", (event) => {
+					if (event.key !== "Enter") return;
+					event.preventDefault();
+					text.inputEl.blur();
+				});
+			});
 
 		new Setting(importLibrary)
 			.setName("Auto Import on Json Change")
@@ -1401,6 +1419,4 @@ export class SettingTab extends PluginSettingTab {
 
 	}
 }
-
-
 

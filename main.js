@@ -3805,13 +3805,31 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
     const importLibrary = containerEl.createEl("details");
     importLibrary.setAttribute("open", "");
     importLibrary.createEl("summary", { text: "" });
-    new import_obsidian5.Setting(importLibrary).setName("BetterBibTex Json File").setDesc("Add relative path from the vault folder to the *BetterBibTex Json* file to be imported. For instance, add `library.json` if the file (library.json) is in the root folder. Instead, if the file is in a subfolder, specify first the subfolder followed by the name of the file (e.g. 'zotero/library.json' if the json file is located in a subfolder of your vault called 'zotero') ").addText((text) => text.setPlaceholder("/path/to/BetterBibTex.json").setValue(settings.bibPath).onChange((value) => __async(this, null, function* () {
-      console.log("Path Bib: " + value);
-      settings.bibPath = value;
-      yield plugin.saveSettings();
-      yield plugin.refreshDiscoveredLibraryFields(true);
-      this.display();
-    })));
+    new import_obsidian5.Setting(importLibrary).setName("BetterBibTex Json File").setDesc("Add relative path from the vault folder to the *BetterBibTex Json* file to be imported. For instance, add `library.json` if the file (library.json) is in the root folder. Instead, if the file is in a subfolder, specify first the subfolder followed by the name of the file (e.g. 'zotero/library.json' if the json file is located in a subfolder of your vault called 'zotero') ").addText((text) => {
+      let lastSavedBibPath = settings.bibPath;
+      const persistBibPath = () => __async(this, null, function* () {
+        const nextBibPath = text.getValue();
+        if (lastSavedBibPath === nextBibPath)
+          return;
+        plugin.settings.bibPath = nextBibPath;
+        yield plugin.saveSettings();
+        yield plugin.refreshDiscoveredLibraryFields(true);
+        lastSavedBibPath = nextBibPath;
+        this.display();
+      });
+      text.setPlaceholder("/path/to/BetterBibTex.json").setValue(settings.bibPath).onChange((value) => {
+        plugin.settings.bibPath = value;
+      });
+      text.inputEl.addEventListener("blur", () => {
+        void persistBibPath();
+      });
+      text.inputEl.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter")
+          return;
+        event.preventDefault();
+        text.inputEl.blur();
+      });
+    });
     new import_obsidian5.Setting(importLibrary).setName("Auto Import on Json Change").setDesc("Automatically update related notes when the BetterBibTex JSON file changes.").addToggle((toggle) => toggle.setValue(settings.autoImportOnBibChange).onChange((value) => __async(this, null, function* () {
       settings.autoImportOnBibChange = value;
       yield plugin.saveSettings();

@@ -2022,6 +2022,7 @@ function replaceTagList(selectedEntry, arrayExtractedKeywords, metadata, divider
     metadata = replaceTemplate(metadata, `#{{keywords}}`, String(tagsCombinedTags.join(divider)));
     metadata = replaceTemplate(metadata, `{{keywordsAll}}`, String(tagsCombined.join(divider)));
     metadata = replaceTemplate(metadata, `{{keywords}}`, String(tagsCombined.join(divider)));
+    metadata = replaceTemplate(metadata, `{{keywordsYamlWikiList}}`, String(tagsCombined.map((tag) => `- "${makeWiki(tag)}"`).join("\n")));
   }
   if (selectedEntry.zoteroTags.length == 0) {
     metadata = metadata.replace("# Tags\n", "");

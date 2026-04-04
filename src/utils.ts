@@ -845,6 +845,11 @@ export function replaceTagList(
 			`{{keywords}}`,
 			String(tagsCombined.join(divider))
 		);
+		metadata = replaceTemplate(
+			metadata,
+			`{{keywordsYamlWikiList}}`,
+			String(tagsCombined.map((tag) => `- "${makeWiki(tag)}"`).join("\n"))
+		);
 	}
 
 	if (selectedEntry.zoteroTags.length == 0) {

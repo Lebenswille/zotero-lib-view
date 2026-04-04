@@ -132,6 +132,20 @@ You can perform additional transformations by adding a "keyword" at the beginnin
 - **Keyword**: Add the text to the `{{keywords}}` list in the template.
   ![](images/exampleKeyword.png)
 
+Template tip:
+- Use `[[{{keywords}}]]` to export keywords as inline wikilinks like `[[A]]; [[B]]`.
+- Use `{{keywordsYamlWikiList}}` to export keywords as a YAML/Markdown list like:
+  ```yaml
+  keywords:
+  {{keywordsYamlWikiList}}
+  ```
+  which becomes:
+  ```yaml
+  keywords:
+  - "[[A]]"
+  - "[[B]]"
+  ```
+
 - **Todo**: Transform the highlight into a task (`- [ ]`).
   ![](images/exampleToDo.png)
 

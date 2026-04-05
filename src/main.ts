@@ -2928,6 +2928,15 @@ export default class MyPlugin extends Plugin {
 				`{{collections}}`,
 				String(collectionArray.join(divider))
 			);
+			metadata = replaceTemplate(
+				metadata,
+				`{{collectionsYamlWikiList}}`,
+				String(
+					collectionArray
+						.map((collection) => `- "${makeWiki(collection)}"`)
+						.join("\n")
+				)
+			);
 		}
 
 		if (collectionParentArray.length > 0) {

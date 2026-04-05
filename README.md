@@ -91,14 +91,50 @@ By default, the plugin exports both metadata and Zotero annotations.
 ### Templates
 You can select between default templates (**Plain**, **Admonition**) or provide a **Custom Template**.
 
-### Fields
-You can use any field from the Better BibTeX JSON. Examples:
-- `{{title}}`, `{{author}}`, `{{year}}`, `{{DOI}}`, `{{abstractNote}}`, `{{url}}`
+### Placeholders
+You can use placeholders in your templates to insert metadata from Better BibTeX and Zotero. This includes standard fields such as:
+
+- `{{title}}`, `{{citeKey}}`, `{{itemType}}`, `{{author}}`, `{{editor}}`, `{{publisher}}`
+- `{{publicationTitle}}`, `{{volume}}`, `{{issue}}`, `{{pages}}`, `{{year}}`
+- `{{DOI}}`, `{{ISBN}}`, `{{ISSN}}`, `{{abstractNote}}`, `{{url}}`
+
+The plugin also supports placeholders for links, tags, collections, and extracted annotations:
+
 - `{{zoteroReaderLink}}`: link to open the specific attachment within the Zotero reader.
 - `{{localLibrary}}`: link to the entry on the Zotero app.
+- `{{keywords}}`: tags associated with the entry.
+- `{{collections}}`: collections/folders where the entry is located.
+- `{{collectionsParent}}`: collections/folders where the entry is located, plus their parent folders.
 - `{{PDFNotes}}`: all highlights, comments, and images extracted from the PDF.
 - `{{Yellow}}`, `{{Red}}`, etc.: highlights of a specific color.
 - `{{Images}}`: all images extracted via the Zotero PDF Reader.
+
+You can also wrap placeholders in `[[ ]]` to create wikilinks, for example `[[{{keywords}}]]` or `[[{{collections}}]]`.
+
+This fork adds YAML-friendly wikilink list placeholders for Obsidian Properties/frontmatter:
+
+- `{{keywordsYamlWikiList}}`
+- `{{collectionsYamlWikiList}}`
+
+Example:
+
+```yaml
+keywords:
+{{keywordsYamlWikiList}}
+collections:
+{{collectionsYamlWikiList}}
+```
+
+This becomes:
+
+```yaml
+keywords:
+- "[[A]]"
+- "[[B]]"
+collections:
+- "[[Collection A]]"
+- "[[Collection B]]"
+```
 
 ### Note Title
 Specify the format of the note title (e.g., `{{citeKey}}`, `{{title}}`, `{{author}}`).
@@ -131,20 +167,6 @@ You can perform additional transformations by adding a "keyword" at the beginnin
 
 - **Keyword**: Add the text to the `{{keywords}}` list in the template.
   ![](images/exampleKeyword.png)
-
-Template tip:
-- Use `[[{{keywords}}]]` to export keywords as inline wikilinks like `[[A]]; [[B]]`.
-- Use `{{keywordsYamlWikiList}}` to export keywords as a YAML/Markdown list like:
-  ```yaml
-  keywords:
-  {{keywordsYamlWikiList}}
-  ```
-  which becomes:
-  ```yaml
-  keywords:
-  - "[[A]]"
-  - "[[B]]"
-  ```
 
 - **Todo**: Transform the highlight into a task (`- [ ]`).
   ![](images/exampleToDo.png)

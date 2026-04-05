@@ -6180,6 +6180,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
       const collectionArrayTags = collectionArray.map(makeTags);
       metadata = replaceTemplate(metadata, `#{{collections}}`, String(collectionArrayTags.join(divider)));
       metadata = replaceTemplate(metadata, `{{collections}}`, String(collectionArray.join(divider)));
+      metadata = replaceTemplate(metadata, `{{collectionsYamlWikiList}}`, String(collectionArray.map((collection) => `- "${makeWiki(collection)}"`).join("\n")));
     }
     if (collectionParentArray.length > 0) {
       const collectionParentArrayBraket = collectionParentArray.map(makeWiki);

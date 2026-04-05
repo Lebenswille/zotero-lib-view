@@ -92,49 +92,82 @@ By default, the plugin exports both metadata and Zotero annotations.
 You can select between default templates (**Plain**, **Admonition**) or provide a **Custom Template**.
 
 ### Placeholders
-You can use placeholders in your templates to insert metadata from Better BibTeX and Zotero. This includes standard fields such as:
+You can use placeholders in your templates to insert metadata from Better BibTeX and Zotero. In general, any field present in the exported Better BibTeX JSON can be used directly in the template with the form `{{fieldName}}`.
 
-- `{{title}}`, `{{citeKey}}`, `{{itemType}}`, `{{author}}`, `{{editor}}`, `{{publisher}}`
-- `{{publicationTitle}}`, `{{volume}}`, `{{issue}}`, `{{pages}}`, `{{year}}`
-- `{{DOI}}`, `{{ISBN}}`, `{{ISSN}}`, `{{abstractNote}}`, `{{url}}`
+Common metadata placeholders include:
 
-The plugin also supports placeholders for links, tags, collections, and extracted annotations:
+- `{{citeKey}}` / `{{citekey}}`: the Better BibTeX citation key.
+- `{{title}}`: the item title.
+- `{{itemType}}`: the Zotero item type.
+- `{{author}}` / `{{authors}}`: formatted author surname key.
+- `{{authorInitials}}` / `{{authorsInitials}}`: formatted author key using initials.
+- `{{authorFullName}}` / `{{authorsFullName}}`: formatted author key using full names.
+- `{{editor}}`: editor names.
+- `{{translator}}`: translator names.
+- `{{publisher}}`: publisher.
+- `{{place}}`: place of publication.
+- `{{series}}`: series title.
+- `{{seriesNumber}}`: series number.
+- `{{publicationTitle}}`: journal, conference, or publication title.
+- `{{volume}}`: volume number.
+- `{{issue}}`: issue number.
+- `{{pages}}`: page range.
+- `{{year}}` / `{{date}}`: publication year.
+- `{{DOI}}`, `{{ISBN}}`, `{{ISSN}}`: identifier fields.
+- `{{abstractNote}}`: abstract text.
+- `{{url}}`, `{{uri}}`, `{{eprint}}`: URL-style metadata fields.
 
-- `{{zoteroReaderLink}}`: link to open the specific attachment within the Zotero reader.
-- `{{localLibrary}}`: link to the entry on the Zotero app.
-- `{{keywords}}`: tags associated with the entry.
+Placeholders for links and files:
+
+- `{{localLibraryLink}}`: link target for the Zotero library entry.
+- `{{localLibrary}}`: Zotero library URI for the item.
+- `{{zoteroReaderLink}}`: link to open the specific attachment in the Zotero reader.
+- `{{file}}`: file information exported by Better BibTeX.
+- `{{localFile}}`: local file links for attachments.
+- `{{localFilePathLink}}`: local file path links for attachments.
+
+Placeholders for people and citations:
+
+- `{{creator}}`: all creators combined according to the configured name format.
+- `{{citationInLine}}`: inline citation string based on authors and year.
+- `{{citationInLineInitials}}`: inline citation string using author initials.
+- `{{citationInLineFullName}}`: inline citation string using full author names.
+- `{{citationShort}}`: shortened citation form.
+- `{{citationFull}}`: fuller citation form.
+
+Placeholders for tags and collections:
+
+- `{{keywordsZotero}}`: tags coming from Zotero metadata.
+- `{{keywordsPDF}}`: tags extracted from the PDF annotation workflow.
+- `{{keywords}}` / `{{keywordsAll}}`: combined keyword list.
 - `{{collections}}`: collections/folders where the entry is located.
 - `{{collectionsParent}}`: collections/folders where the entry is located, plus their parent folders.
-- `{{PDFNotes}}`: all highlights, comments, and images extracted from the PDF.
-- `{{Yellow}}`, `{{Red}}`, etc.: highlights of a specific color.
+
+Placeholders for notes and annotations:
+
+- `{{UserNotes}}`: Zotero notes attached to the item.
+- `{{PDFNotes}}`: all highlights, comments, tags, and images extracted from the PDF.
 - `{{Images}}`: all images extracted via the Zotero PDF Reader.
+- `{{Yellow}}`, `{{Red}}`, `{{Green}}`, `{{Blue}}`, `{{Purple}}`, `{{Black}}`, `{{White}}`, `{{Gray}}`, `{{Orange}}`, `{{Cyan}}`, `{{Magenta}}`, `{{CustomHex}}`: annotations filtered by highlight color.
 
-You can also wrap placeholders in `[[ ]]` to create wikilinks, for example `[[{{keywords}}]]` or `[[{{collections}}]]`.
+For repeated values such as creators, keywords, and collections, you can also wrap placeholders in formatting markers:
 
-This fork adds YAML-friendly wikilink list placeholders for Obsidian Properties/frontmatter:
+- `[[{{keywords}}]]` or `[[{{collections}}]]`: export as wikilinks.
+- `"{{keywords}}"`: export as quoted values.
+- `#{{keywords}}`: export as tags.
 
-- `{{keywordsYamlWikiList}}`
-- `{{collectionsYamlWikiList}}`
+This fork also adds YAML-friendly wikilink list placeholders for Obsidian Properties/frontmatter:
 
-Example:
-
-```yaml
-keywords:
-{{keywordsYamlWikiList}}
-collections:
-{{collectionsYamlWikiList}}
-```
-
-This becomes:
-
-```yaml
-keywords:
-- "[[A]]"
-- "[[B]]"
-collections:
-- "[[Collection A]]"
-- "[[Collection B]]"
-```
+- `{{keywordsYamlWikiList}}`: exports keywords as:
+  ```yaml
+  - "[[Keyword A]]"
+  - "[[Keyword B]]"
+  ```
+- `{{collectionsYamlWikiList}}`: exports collections as:
+  ```yaml
+  - "[[Collection A]]"
+  - "[[Collection B]]"
+  ```
 
 ### Note Title
 Specify the format of the note title (e.g., `{{citeKey}}`, `{{title}}`, `{{author}}`).

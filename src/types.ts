@@ -4,6 +4,8 @@ export interface MyPluginSettings {
 	bibPath: string;
 	autoImportOnBibChange: boolean;
 	libraryViewColumns: string[];
+	libraryViewSortColumn: string;
+	libraryViewSortDirection: "asc" | "desc";
 	templateContent: string;
 	templatePath: string;
 	templateType: string;

@@ -65,8 +65,8 @@ class ZoteroLibraryView extends ItemView {
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
 		this.plugin = plugin;
-		this.sortColumn = "Added";
-		this.sortDirection = "desc";
+		this.sortColumn = this.plugin.settings.libraryViewSortColumn || "Added";
+		this.sortDirection = this.plugin.settings.libraryViewSortDirection || "desc";
 	}
 
 	getViewType() {
@@ -170,6 +170,9 @@ class ZoteroLibraryView extends ItemView {
 					this.sortColumn = columnString;
 					this.sortDirection = columnString.includes("Added") ? "desc" : "asc";
 				}
+				this.plugin.settings.libraryViewSortColumn = this.sortColumn;
+				this.plugin.settings.libraryViewSortDirection = this.sortDirection;
+				void this.plugin.saveSettings();
 				updateSortIndicators();
 				renderRows(searchInput.value);
 			};
@@ -184,6 +187,15 @@ class ZoteroLibraryView extends ItemView {
 		});
 
 		const tbody = table.createTBody();
+		const openEntryPdf = (entry: LibraryEntry) => {
+			const pdfFile = (entry.pdfName && this.plugin.app.metadataCache.getFirstLinkpathDest(entry.pdfName, "")) ||
+				this.plugin.app.metadataCache.getFirstLinkpathDest(entry.citeKey + ".pdf", "");
+			if (pdfFile) {
+				this.plugin.app.workspace.getLeaf(true).openFile(pdfFile as TFile);
+			} else if (entry.pdfLink !== "") {
+				window.open(entry.pdfLink, "_blank");
+			}
+		};
 
 		const renderRows = (query: string) => {
 			tbody.empty();
@@ -213,7 +225,19 @@ class ZoteroLibraryView extends ItemView {
 
 					if (field === "Year") { row.insertCell().setText(entry.year); return; }
 					if (field === "Type") { row.insertCell().setText(entry.itemType); return; }
-					if (field === "Title") { row.insertCell().setText(entry.title); return; }
+					if (field === "Title") {
+						const titleCell = row.insertCell();
+						if (entry.pdfLink !== "") {
+							const titleLink = titleCell.createEl("a", { text: entry.title, href: "#" });
+							titleLink.addEventListener("click", (event) => {
+								event.preventDefault();
+								openEntryPdf(entry);
+							});
+						} else {
+							titleCell.setText(entry.title);
+						}
+						return;
+					}
 					if (field === "Authors") { row.insertCell().setText(entry.authors); return; }
 					if (field === "Publication") { row.insertCell().setText(entry.publication); return; }
 					if (field === "Tags") { row.insertCell().setText(entry.tags); return; }
@@ -227,13 +251,7 @@ class ZoteroLibraryView extends ItemView {
 						if (entry.pdfLink !== "") {
 							const pdfButton = actionsCell.createEl("button", { text: "PDF" });
 							pdfButton.addEventListener("click", () => {
-								const pdfFile = (entry.pdfName && this.plugin.app.metadataCache.getFirstLinkpathDest(entry.pdfName, "")) ||
-									this.plugin.app.metadataCache.getFirstLinkpathDest(entry.citeKey + ".pdf", "");
-								if (pdfFile) {
-									this.plugin.app.workspace.getLeaf(true).openFile(pdfFile as TFile);
-								} else {
-									window.open(entry.pdfLink, "_blank");
-								}
+								openEntryPdf(entry);
 							});
 						}
 

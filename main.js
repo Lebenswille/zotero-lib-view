@@ -558,6 +558,8 @@ var init_constants = __esm({
       bibPath: "",
       autoImportOnBibChange: false,
       libraryViewColumns: BUILT_IN_LIBRARY_COLUMNS.slice(),
+      libraryViewSortColumn: "Added",
+      libraryViewSortDirection: "desc",
       templateContent: templatePlain,
       templatePath: "",
       templateType: "Admonition",
@@ -4417,8 +4419,8 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
-    this.sortColumn = "Added";
-    this.sortDirection = "desc";
+    this.sortColumn = this.plugin.settings.libraryViewSortColumn || "Added";
+    this.sortDirection = this.plugin.settings.libraryViewSortDirection || "desc";
   }
   getViewType() {
     return ZOTERO_LIBRARY_VIEW_TYPE;
@@ -4509,6 +4511,9 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
             this.sortColumn = columnString;
             this.sortDirection = columnString.includes("Added") ? "desc" : "asc";
           }
+          this.plugin.settings.libraryViewSortColumn = this.sortColumn;
+          this.plugin.settings.libraryViewSortDirection = this.sortDirection;
+          void this.plugin.saveSettings();
           updateSortIndicators();
           renderRows(searchInput.value);
         };
@@ -4521,6 +4526,14 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
         });
       });
       const tbody = table.createTBody();
+      const openEntryPdf = (entry) => {
+        const pdfFile = entry.pdfName && this.plugin.app.metadataCache.getFirstLinkpathDest(entry.pdfName, "") || this.plugin.app.metadataCache.getFirstLinkpathDest(entry.citeKey + ".pdf", "");
+        if (pdfFile) {
+          this.plugin.app.workspace.getLeaf(true).openFile(pdfFile);
+        } else if (entry.pdfLink !== "") {
+          window.open(entry.pdfLink, "_blank");
+        }
+      };
       const renderRows = (query) => {
         tbody.empty();
         const normalizedQuery = query.trim().toLowerCase();
@@ -4550,7 +4563,16 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
               return;
             }
             if (field === "Title") {
-              row.insertCell().setText(entry.title);
+              const titleCell = row.insertCell();
+              if (entry.pdfLink !== "") {
+                const titleLink = titleCell.createEl("a", { text: entry.title, href: "#" });
+                titleLink.addEventListener("click", (event) => {
+                  event.preventDefault();
+                  openEntryPdf(entry);
+                });
+              } else {
+                titleCell.setText(entry.title);
+              }
               return;
             }
             if (field === "Authors") {
@@ -4575,12 +4597,7 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
               if (entry.pdfLink !== "") {
                 const pdfButton = actionsCell.createEl("button", { text: "PDF" });
                 pdfButton.addEventListener("click", () => {
-                  const pdfFile = entry.pdfName && this.plugin.app.metadataCache.getFirstLinkpathDest(entry.pdfName, "") || this.plugin.app.metadataCache.getFirstLinkpathDest(entry.citeKey + ".pdf", "");
-                  if (pdfFile) {
-                    this.plugin.app.workspace.getLeaf(true).openFile(pdfFile);
-                  } else {
-                    window.open(entry.pdfLink, "_blank");
-                  }
+                  openEntryPdf(entry);
                 });
               }
               if (entry.url !== "") {

@@ -113,6 +113,8 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	bibPath: "",
 	autoImportOnBibChange: false,
 	libraryViewColumns: BUILT_IN_LIBRARY_COLUMNS.slice(),
+	libraryViewSortColumn: "Added",
+	libraryViewSortDirection: "desc",
 	templateContent: templatePlain,
 	templatePath: "",
 	templateType: "Admonition",

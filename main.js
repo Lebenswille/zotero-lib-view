@@ -4529,7 +4529,7 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
       const openEntryPdf = (entry) => {
         const pdfFile = entry.pdfName && this.plugin.app.metadataCache.getFirstLinkpathDest(entry.pdfName, "") || this.plugin.app.metadataCache.getFirstLinkpathDest(entry.citeKey + ".pdf", "");
         if (pdfFile) {
-          this.plugin.app.workspace.getLeaf(true).openFile(pdfFile);
+          void this.plugin.openFileReusingLeaf(pdfFile);
         } else if (entry.pdfLink !== "") {
           window.open(entry.pdfLink, "_blank");
         }
@@ -4781,12 +4781,38 @@ var MyPlugin = class extends import_obsidian6.Plugin {
       this.app.workspace.revealLeaf(this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE)[0]);
     });
   }
+  findOpenLeafForFile(file) {
+    var _a, _b;
+    for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+      const view = leaf.view;
+      if (((_a = view.file) == null ? void 0 : _a.path) === file.path) {
+        return leaf;
+      }
+    }
+    for (const leaf of this.app.workspace.getLeavesOfType("pdf")) {
+      const state = leaf.getViewState();
+      if (((_b = state.state) == null ? void 0 : _b.file) === file.path) {
+        return leaf;
+      }
+    }
+    return null;
+  }
+  openFileReusingLeaf(file) {
+    return __async(this, null, function* () {
+      const existingLeaf = this.findOpenLeafForFile(file);
+      if (existingLeaf) {
+        yield this.app.workspace.revealLeaf(existingLeaf);
+        this.app.workspace.setActiveLeaf(existingLeaf, true, true);
+        return;
+      }
+      yield this.app.workspace.getLeaf(true).openFile(file);
+    });
+  }
   openOrCreateLibraryEntryNote(entry) {
     return __async(this, null, function* () {
       const { app } = this;
       if (entry.noteFile) {
-        const leaf = app.workspace.getLeaf(false);
-        yield leaf.openFile(entry.noteFile);
+        yield this.openFileReusingLeaf(entry.noteFile);
       } else {
         yield this.createNote(entry.rawEntry, entry.rawData);
         yield this.refreshLibraryViews();

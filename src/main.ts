@@ -191,7 +191,7 @@ class ZoteroLibraryView extends ItemView {
 			const pdfFile = (entry.pdfName && this.plugin.app.metadataCache.getFirstLinkpathDest(entry.pdfName, "")) ||
 				this.plugin.app.metadataCache.getFirstLinkpathDest(entry.citeKey + ".pdf", "");
 			if (pdfFile) {
-				this.plugin.app.workspace.getLeaf(true).openFile(pdfFile as TFile);
+				void this.plugin.openFileReusingLeaf(pdfFile as TFile);
 			} else if (entry.pdfLink !== "") {
 				window.open(entry.pdfLink, "_blank");
 			}
@@ -485,11 +485,39 @@ export default class MyPlugin extends Plugin {
 		);
 	}
 
+	findOpenLeafForFile(file: TFile): WorkspaceLeaf | null {
+		for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+			const view = leaf.view as MarkdownView;
+			if (view.file?.path === file.path) {
+				return leaf;
+			}
+		}
+
+		for (const leaf of this.app.workspace.getLeavesOfType("pdf")) {
+			const state = leaf.getViewState() as { state?: { file?: string } };
+			if (state.state?.file === file.path) {
+				return leaf;
+			}
+		}
+
+		return null;
+	}
+
+	async openFileReusingLeaf(file: TFile) {
+		const existingLeaf = this.findOpenLeafForFile(file);
+		if (existingLeaf) {
+			await this.app.workspace.revealLeaf(existingLeaf);
+			this.app.workspace.setActiveLeaf(existingLeaf, true, true);
+			return;
+		}
+
+		await this.app.workspace.getLeaf(true).openFile(file);
+	}
+
 	async openOrCreateLibraryEntryNote(entry: LibraryEntry) {
 		const { app } = this;
 		if (entry.noteFile) {
-			const leaf = app.workspace.getLeaf(false);
-			await leaf.openFile(entry.noteFile);
+			await this.openFileReusingLeaf(entry.noteFile);
 		} else {
 			// Create note logic
 			await this.createNote(entry.rawEntry, entry.rawData);

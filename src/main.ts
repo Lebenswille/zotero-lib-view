@@ -57,6 +57,31 @@ import {
 } from "./utils";
 import { createImportSpecifier } from "typescript";
 
+const BUILT_IN_LIBRARY_FIELD_MAP: Record<string, string> = {
+	"Obsidian Notes": "Obsidian Notes",
+	"citationKey": "citationKey",
+	"Year": "date",
+	"Type": "itemType",
+	"Title": "title",
+	"Authors": "creators",
+	"Publication": "publicationTitle",
+	"Tags": "tags",
+	"Added": "dateAdded",
+	"Action": "Actions",
+	"Actions": "Actions",
+};
+
+const LEGACY_LIBRARY_COLUMN_MAP: Record<string, string> = {
+	"citationKey|Obsidian Notes": "Obsidian Notes",
+	"date|Year": "Year",
+	"itemType|Type": "Type",
+	"title|Title": "Title",
+	"creators|Authors": "Authors",
+	"publicationTitle|Publication": "Publication",
+	"tags|Tags": "Tags",
+	"dateAdded|Added": "Added",
+};
+
 class ZoteroLibraryView extends ItemView {
 	plugin: MyPlugin;
 	sortColumn: string;
@@ -65,7 +90,7 @@ class ZoteroLibraryView extends ItemView {
 	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
 		super(leaf);
 		this.plugin = plugin;
-		this.sortColumn = this.plugin.settings.libraryViewSortColumn || "Added";
+		this.sortColumn = this.plugin.normalizeLibraryColumn(this.plugin.settings.libraryViewSortColumn || "Added");
 		this.sortDirection = this.plugin.settings.libraryViewSortDirection || "desc";
 	}
 
@@ -148,7 +173,8 @@ class ZoteroLibraryView extends ItemView {
 		};
 
 		visibleColumns.forEach(columnString => {
-			const parts = columnString.split("|");
+			const normalizedColumn = this.plugin.normalizeLibraryColumn(columnString);
+			const parts = normalizedColumn.split("|");
 			const label = parts[0];
 			const th = headRow.createEl("th");
 			th.addClass("zotero-library-sortable");
@@ -156,19 +182,19 @@ class ZoteroLibraryView extends ItemView {
 			headerLabel.createSpan({ cls: "zotero-library-sort-text", text: label });
 			const indicator = headerLabel.createSpan({
 				cls: "zotero-library-sort-indicator",
-				text: this.sortColumn === columnString ? (this.sortDirection === "asc" ? "↑" : "↓") : "",
+				text: this.sortColumn === normalizedColumn ? (this.sortDirection === "asc" ? "↑" : "↓") : "",
 			});
-			sortIndicators[columnString] = indicator;
+			sortIndicators[normalizedColumn] = indicator;
 
 			th.setAttr("role", "button");
 			th.setAttr("tabindex", "0");
 
 			const sortHandler = () => {
-				if (this.sortColumn === columnString) {
+				if (this.sortColumn === normalizedColumn) {
 					this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc";
 				} else {
-					this.sortColumn = columnString;
-					this.sortDirection = columnString.includes("Added") ? "desc" : "asc";
+					this.sortColumn = normalizedColumn;
+					this.sortDirection = this.plugin.resolveLibraryColumnField(normalizedColumn) === "dateAdded" ? "desc" : "asc";
 				}
 				this.plugin.settings.libraryViewSortColumn = this.sortColumn;
 				this.plugin.settings.libraryViewSortDirection = this.sortDirection;
@@ -209,23 +235,26 @@ class ZoteroLibraryView extends ItemView {
 			filteredEntries.forEach(entry => {
 				const row = tbody.insertRow();
 				visibleColumns.forEach(columnString => {
-					const parts = columnString.split("|");
+					const normalizedColumn = this.plugin.normalizeLibraryColumn(columnString);
+					const parts = normalizedColumn.split("|");
 					const label = parts[0];
-					const field = parts[1] || label;
+					const field = this.plugin.resolveLibraryColumnField(normalizedColumn);
+					const noteTitle = entry.noteFile?.basename || entry.notePathShort.split("/").pop()?.replace(/\.md$/i, "") || entry.citeKey;
 
 					if (field === "Obsidian Notes") {
 						const citeCell = row.insertCell();
-						const noteLink = citeCell.createEl("a", { text: entry.citeKey, href: "#" });
+						const noteLink = citeCell.createEl("a", { text: noteTitle, href: "#" });
 						noteLink.addEventListener("click", (event) => {
 							event.preventDefault();
 							this.plugin.openOrCreateLibraryEntryNote(entry);
 						});
 						return;
 					}
+					if (field === "citationKey") { row.insertCell().setText(entry.citeKey); return; }
 
-					if (field === "Year") { row.insertCell().setText(entry.year); return; }
-					if (field === "Type") { row.insertCell().setText(entry.itemType); return; }
-					if (field === "Title") {
+					if (field === "date" || field === "Year") { row.insertCell().setText(entry.year); return; }
+					if (field === "itemType" || field === "Type") { row.insertCell().setText(entry.itemType); return; }
+					if (field === "title" || field === "Title") {
 						const titleCell = row.insertCell();
 						if (entry.pdfLink !== "") {
 							const titleLink = titleCell.createEl("a", { text: entry.title, href: "#" });
@@ -238,10 +267,10 @@ class ZoteroLibraryView extends ItemView {
 						}
 						return;
 					}
-					if (field === "Authors") { row.insertCell().setText(entry.authors); return; }
-					if (field === "Publication") { row.insertCell().setText(entry.publication); return; }
-					if (field === "Tags") { row.insertCell().setText(entry.tags); return; }
-					if (field === "Added") { row.insertCell().setText(entry.dateAddedShort); return; }
+					if (field === "creators" || field === "Authors") { row.insertCell().setText(entry.authors); return; }
+					if (field === "publicationTitle" || field === "Publication") { row.insertCell().setText(entry.publication); return; }
+					if (field === "tags" || field === "Tags") { row.insertCell().setText(entry.tags); return; }
+					if (field === "dateAdded" || field === "Added") { row.insertCell().setText(entry.dateAddedShort); return; }
 
 					if (field === "Actions") {
 						const actionsCell = row.insertCell();
@@ -460,29 +489,35 @@ export default class MyPlugin extends Plugin {
 	}
 
 	async activateLibraryViewInSidebar() {
-		this.app.workspace.detachLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
+		const existingLeaf = this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE)
+			.find(leaf => leaf.getRoot() === this.app.workspace.rightSplit);
+		if (existingLeaf) {
+			this.app.workspace.revealLeaf(existingLeaf);
+			return;
+		}
 
-		await this.app.workspace.getRightLeaf(false).setViewState({
+		const leaf = this.app.workspace.getRightLeaf(false);
+		await leaf.setViewState({
 			type: ZOTERO_LIBRARY_VIEW_TYPE,
 			active: true,
 		});
-
-		this.app.workspace.revealLeaf(
-			this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE)[0]
-		);
+		this.app.workspace.revealLeaf(leaf);
 	}
 
 	async activateLibraryViewInTab() {
-		this.app.workspace.detachLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
+		const existingLeaf = this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE)
+			.find(leaf => leaf.getRoot() !== this.app.workspace.rightSplit && leaf.getRoot() !== this.app.workspace.leftSplit);
+		if (existingLeaf) {
+			this.app.workspace.revealLeaf(existingLeaf);
+			return;
+		}
 
-		await this.app.workspace.getLeaf(true).setViewState({
+		const leaf = this.app.workspace.getLeaf(true);
+		await leaf.setViewState({
 			type: ZOTERO_LIBRARY_VIEW_TYPE,
 			active: true,
 		});
-
-		this.app.workspace.revealLeaf(
-			this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE)[0]
-		);
+		this.app.workspace.revealLeaf(leaf);
 	}
 
 	findOpenLeafForFile(file: TFile): WorkspaceLeaf | null {
@@ -536,15 +571,35 @@ export default class MyPlugin extends Plugin {
 	}
 
 	parseLibraryViewColumns(value: string): string[] {
-		const parsed = String(value || "").split(",").map(column => column.trim()).filter(column => column !== "");
+		const parsed = String(value || "")
+			.split(",")
+			.map(column => this.normalizeLibraryColumn(column.trim()))
+			.filter(column => column !== "");
 		if (parsed.length > 0) {
 			return parsed;
 		}
 		return BUILT_IN_LIBRARY_COLUMNS.slice();
 	}
 
+	normalizeLibraryColumn(column: string): string {
+		return LEGACY_LIBRARY_COLUMN_MAP[column] || column;
+	}
+
+	resolveLibraryColumnField(column: string): string {
+		const normalizedColumn = this.normalizeLibraryColumn(column);
+		const parts = normalizedColumn.split("|");
+		if (parts.length >= 2) {
+			return parts[1] || parts[0];
+		}
+		return BUILT_IN_LIBRARY_FIELD_MAP[normalizedColumn] || normalizedColumn;
+	}
+
 	getAvailableLibraryViewColumns(): string[] {
 		return Array.from(new Set(BUILT_IN_LIBRARY_COLUMNS.concat(this.discoveredLibraryFields || [])));
+	}
+
+	getAvailableLibrarySourceFields(): string[] {
+		return Array.from(new Set(Object.values(BUILT_IN_LIBRARY_FIELD_MAP).concat(this.discoveredLibraryFields || [])));
 	}
 
 	getLibraryViewColumns(): string[] {
@@ -559,36 +614,39 @@ export default class MyPlugin extends Plugin {
 	}
 
 	compareLibraryEntries(firstEntry: LibraryEntry, secondEntry: LibraryEntry, column: string, direction: "asc" | "desc"): number {
-		const parts = column.split("|");
-		const label = parts[0];
-		const field = parts[1] || label;
+		const normalizedColumn = this.normalizeLibraryColumn(column);
+		const field = this.resolveLibraryColumnField(normalizedColumn);
 		const directionFactor = direction === "desc" ? -1 : 1;
+		const getLibraryEntryNoteTitle = (entry: LibraryEntry) => entry.noteFile?.basename || entry.notePathShort.split("/").pop()?.replace(/\.md$/i, "") || entry.citeKey;
 
 		let firstValue: any = "";
 		let secondValue: any = "";
 
 		if (field === "Obsidian Notes") {
+			firstValue = getLibraryEntryNoteTitle(firstEntry);
+			secondValue = getLibraryEntryNoteTitle(secondEntry);
+		} else if (field === "citationKey") {
 			firstValue = firstEntry.citeKey;
 			secondValue = secondEntry.citeKey;
-		} else if (field === "Year") {
+		} else if (field === "date" || field === "Year") {
 			firstValue = firstEntry.year;
 			secondValue = secondEntry.year;
-		} else if (field === "Type") {
+		} else if (field === "itemType" || field === "Type") {
 			firstValue = firstEntry.itemType;
 			secondValue = secondEntry.itemType;
-		} else if (field === "Title") {
+		} else if (field === "title" || field === "Title") {
 			firstValue = firstEntry.title;
 			secondValue = secondEntry.title;
-		} else if (field === "Authors") {
+		} else if (field === "creators" || field === "Authors") {
 			firstValue = firstEntry.authors;
 			secondValue = secondEntry.authors;
-		} else if (field === "Publication") {
+		} else if (field === "publicationTitle" || field === "Publication") {
 			firstValue = firstEntry.publication;
 			secondValue = secondEntry.publication;
-		} else if (field === "Tags") {
+		} else if (field === "tags" || field === "Tags") {
 			firstValue = firstEntry.tags;
 			secondValue = secondEntry.tags;
-		} else if (field === "Added") {
+		} else if (field === "dateAdded" || field === "Added") {
 			firstValue = firstEntry.dateAdded;
 			secondValue = secondEntry.dateAdded;
 		} else if (field === "Actions") {
@@ -723,20 +781,6 @@ export default class MyPlugin extends Plugin {
 		const normalizedPath = normalizePath(notePathShort).replace(/^\/+/, "");
 		const directMatch = this.app.vault.getAbstractFileByPath(normalizedPath) || (this.app.vault as any).getFileByPath(normalizedPath);
 		if (directMatch != null) return directMatch;
-
-		// Search by citekey in export path
-		const exportPath = normalizePath(this.settings.exportPath || "").replace(/^\/+/, "");
-		const expectedBasename = `@${selectedEntry.citationKey}`;
-
-		const markdownFiles = this.app.vault.getMarkdownFiles();
-		for (const file of markdownFiles) {
-			const normalizedFilePath = normalizePath(file.path).replace(/^\/+/, "");
-			if (exportPath !== "" && !normalizedFilePath.startsWith(exportPath + "/")) continue;
-
-			if (file.basename === expectedBasename) {
-				return file;
-			}
-		}
 
 		return null;
 	}

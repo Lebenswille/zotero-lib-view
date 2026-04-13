@@ -87,7 +87,7 @@ export class SettingTab extends PluginSettingTab {
 
 		const renderLibraryColumnsEditor = () => {
 			libraryColumnsContainer.empty();
-			const availableColumns = plugin.getAvailableLibraryViewColumns();
+			const availableFields = plugin.getAvailableLibrarySourceFields();
 			const currentColumns = plugin.getLibraryViewColumns().slice();
 
 			new Setting(libraryColumnsContainer)
@@ -97,7 +97,7 @@ export class SettingTab extends PluginSettingTab {
 			currentColumns.forEach((columnString, index) => {
 				const parts = columnString.split("|");
 				const displayName = parts[0];
-				const fieldName = parts[1] || displayName;
+				const fieldName = plugin.resolveLibraryColumnField(columnString);
 				const subProperty = parts[2] || "";
 
 				const setting = new Setting(libraryColumnsContainer)
@@ -108,7 +108,10 @@ export class SettingTab extends PluginSettingTab {
 						.setValue(displayName)
 						.onChange(async (val) => {
 							parts[0] = val;
-							currentColumns[index] = parts.join("|");
+							currentColumns[index] = [parts[0], parts[1], parts[2]].filter((part, partIndex) => {
+								if (partIndex === 0) return true;
+								return part != null && part !== "";
+							}).join("|");
 							await silentSaveLibraryColumns(currentColumns);
 						});
 					text.inputEl.addEventListener("blur", () => {
@@ -117,13 +120,16 @@ export class SettingTab extends PluginSettingTab {
 				});
 
 				setting.addDropdown(dropdown => {
-					availableColumns.forEach(option => {
+					availableFields.forEach(option => {
 						dropdown.addOption(option, option);
 					});
 					dropdown.setValue(fieldName);
 					dropdown.onChange(async (value) => {
 						parts[1] = value;
-						currentColumns[index] = parts.join("|");
+						currentColumns[index] = [parts[0], parts[1], parts[2]].filter((part, partIndex) => {
+							if (partIndex === 0) return true;
+							return part != null && part !== "";
+						}).join("|");
 						await saveLibraryColumns(currentColumns);
 					});
 				});
@@ -1419,4 +1425,3 @@ export class SettingTab extends PluginSettingTab {
 
 	}
 }
-

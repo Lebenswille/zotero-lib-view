@@ -535,6 +535,7 @@ var require_color_classifier = __commonJS({
 var constants_exports = {};
 __export(constants_exports, {
   BUILT_IN_LIBRARY_COLUMNS: () => BUILT_IN_LIBRARY_COLUMNS,
+  DEFAULT_LIBRARY_VIEW_COLUMNS: () => DEFAULT_LIBRARY_VIEW_COLUMNS,
   DEFAULT_SETTINGS: () => DEFAULT_SETTINGS,
   EXCLUDED_DYNAMIC_LIBRARY_FIELDS: () => EXCLUDED_DYNAMIC_LIBRARY_FIELDS,
   HeaderLevels: () => HeaderLevels,
@@ -545,7 +546,7 @@ __export(constants_exports, {
   templateAdmonition: () => templateAdmonition,
   templatePlain: () => templatePlain
 });
-var templatePlain, templateAdmonition, ZOTERO_LIBRARY_VIEW_TYPE, ZOTERO_LIBRARY_HEADER_BUTTON_ID, BUILT_IN_LIBRARY_COLUMNS, EXCLUDED_DYNAMIC_LIBRARY_FIELDS, DEFAULT_SETTINGS, HeaderLevels, TEMPLATE_REG, TEMPLATE_BRACKET_REG;
+var templatePlain, templateAdmonition, ZOTERO_LIBRARY_VIEW_TYPE, ZOTERO_LIBRARY_HEADER_BUTTON_ID, BUILT_IN_LIBRARY_COLUMNS, DEFAULT_LIBRARY_VIEW_COLUMNS, EXCLUDED_DYNAMIC_LIBRARY_FIELDS, DEFAULT_SETTINGS, HeaderLevels, TEMPLATE_REG, TEMPLATE_BRACKET_REG;
 var init_constants = __esm({
   "src/constants.ts"() {
     templatePlain = "# {{title}}\n\n## Metadata\n- **CiteKey**: {{citekey}}\n - **Type**: {{itemType}}\n - **Title**: {{title}}, \n - **Author**: {{author}};  \n- **Editor**: {{editor}};  \n- **Translator**: {{translator}}\n- **Publisher**: {{publisher}},\n- **Location**: {{place}},\n- **Series**: {{series}}\n- **Series Number**: {{seriesNumber}}\n- **Journal**: {{publicationTitle}}, \n- **Volume**: {{volume}},\n- **Issue**: {{issue}}\n- **Pages**: {{pages}}\n- **Year**: {{year}} \n- **DOI**: {{DOI}}\n- **ISSN**: {{ISSN}}\n- **ISBN**: {{ISBN}}\n\n## Abstract\n{{abstractNote}}\n## Files and Links\n- **Url**: {{url}}\n- **Uri**: {{uri}}\n- **Eprint**: {{eprint}}\n- **File**: {{file}}\n- **Local Library**: [Zotero]({{localLibraryLink}})\n\n## Tags and Collections\n- **Keywords**: {{keywordsAll}}\n- **Collections**: {{collectionsParent}}\n\n\n----\n\n## Comments\n{{UserNotes}}\n\n\n----\n\n## Extracted Annotations\n{{PDFNotes}}";
@@ -553,11 +554,12 @@ var init_constants = __esm({
     ZOTERO_LIBRARY_VIEW_TYPE = "zotero-library-view";
     ZOTERO_LIBRARY_HEADER_BUTTON_ID = "zotero-library-header-button";
     BUILT_IN_LIBRARY_COLUMNS = ["Obsidian Notes", "Year", "Type", "Title", "Authors", "Publication", "Tags", "Added", "Actions"];
+    DEFAULT_LIBRARY_VIEW_COLUMNS = ["Obsidian Notes", "Year", "Title", "Publication", "Tags", "Added", "Action|Actions"];
     EXCLUDED_DYNAMIC_LIBRARY_FIELDS = new Set(["citationKey", "date", "itemType", "title", "creators", "publicationTitle", "tags", "dateAdded", "url", "select", "uri"]);
     DEFAULT_SETTINGS = {
       bibPath: "",
       autoImportOnBibChange: false,
-      libraryViewColumns: BUILT_IN_LIBRARY_COLUMNS.slice(),
+      libraryViewColumns: DEFAULT_LIBRARY_VIEW_COLUMNS.slice(),
       libraryViewSortColumn: "Added",
       libraryViewSortDirection: "desc",
       templateContent: templatePlain,
@@ -3851,19 +3853,23 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
     });
     const renderLibraryColumnsEditor = () => {
       libraryColumnsContainer.empty();
-      const availableColumns = plugin.getAvailableLibraryViewColumns();
+      const availableFields = plugin.getAvailableLibrarySourceFields();
       const currentColumns = plugin.getLibraryViewColumns().slice();
       new import_obsidian5.Setting(libraryColumnsContainer).setName("Library View Columns").setDesc("Customize each column: [Title] [Source Field] [Sub-Property]. Example: My Notes | notes | note");
       currentColumns.forEach((columnString, index) => {
         const parts = columnString.split("|");
         const displayName = parts[0];
-        const fieldName = parts[1] || displayName;
+        const fieldName = plugin.resolveLibraryColumnField(columnString);
         const subProperty = parts[2] || "";
         const setting = new import_obsidian5.Setting(libraryColumnsContainer).setName(`Column ${index + 1}`);
         setting.addText((text) => {
           text.setPlaceholder("Title").setValue(displayName).onChange((val) => __async(this, null, function* () {
             parts[0] = val;
-            currentColumns[index] = parts.join("|");
+            currentColumns[index] = [parts[0], parts[1], parts[2]].filter((part, partIndex) => {
+              if (partIndex === 0)
+                return true;
+              return part != null && part !== "";
+            }).join("|");
             yield silentSaveLibraryColumns(currentColumns);
           }));
           text.inputEl.addEventListener("blur", () => {
@@ -3871,13 +3877,17 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
           });
         });
         setting.addDropdown((dropdown) => {
-          availableColumns.forEach((option) => {
+          availableFields.forEach((option) => {
             dropdown.addOption(option, option);
           });
           dropdown.setValue(fieldName);
           dropdown.onChange((value) => __async(this, null, function* () {
             parts[1] = value;
-            currentColumns[index] = parts.join("|");
+            currentColumns[index] = [parts[0], parts[1], parts[2]].filter((part, partIndex) => {
+              if (partIndex === 0)
+                return true;
+              return part != null && part !== "";
+            }).join("|");
             yield saveLibraryColumns(currentColumns);
           }));
         });
@@ -4415,11 +4425,34 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
 };
 
 // src/main.ts
+var BUILT_IN_LIBRARY_FIELD_MAP = {
+  "Obsidian Notes": "Obsidian Notes",
+  "citationKey": "citationKey",
+  "Year": "date",
+  "Type": "itemType",
+  "Title": "title",
+  "Authors": "creators",
+  "Publication": "publicationTitle",
+  "Tags": "tags",
+  "Added": "dateAdded",
+  "Action": "Actions",
+  "Actions": "Actions"
+};
+var LEGACY_LIBRARY_COLUMN_MAP = {
+  "citationKey|Obsidian Notes": "Obsidian Notes",
+  "date|Year": "Year",
+  "itemType|Type": "Type",
+  "title|Title": "Title",
+  "creators|Authors": "Authors",
+  "publicationTitle|Publication": "Publication",
+  "tags|Tags": "Tags",
+  "dateAdded|Added": "Added"
+};
 var ZoteroLibraryView = class extends import_obsidian6.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
     this.plugin = plugin;
-    this.sortColumn = this.plugin.settings.libraryViewSortColumn || "Added";
+    this.sortColumn = this.plugin.normalizeLibraryColumn(this.plugin.settings.libraryViewSortColumn || "Added");
     this.sortDirection = this.plugin.settings.libraryViewSortDirection || "desc";
   }
   getViewType() {
@@ -4491,7 +4524,8 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
         });
       };
       visibleColumns.forEach((columnString) => {
-        const parts = columnString.split("|");
+        const normalizedColumn = this.plugin.normalizeLibraryColumn(columnString);
+        const parts = normalizedColumn.split("|");
         const label = parts[0];
         const th = headRow.createEl("th");
         th.addClass("zotero-library-sortable");
@@ -4499,17 +4533,17 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
         headerLabel.createSpan({ cls: "zotero-library-sort-text", text: label });
         const indicator = headerLabel.createSpan({
           cls: "zotero-library-sort-indicator",
-          text: this.sortColumn === columnString ? this.sortDirection === "asc" ? "\u2191" : "\u2193" : ""
+          text: this.sortColumn === normalizedColumn ? this.sortDirection === "asc" ? "\u2191" : "\u2193" : ""
         });
-        sortIndicators[columnString] = indicator;
+        sortIndicators[normalizedColumn] = indicator;
         th.setAttr("role", "button");
         th.setAttr("tabindex", "0");
         const sortHandler = () => {
-          if (this.sortColumn === columnString) {
+          if (this.sortColumn === normalizedColumn) {
             this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc";
           } else {
-            this.sortColumn = columnString;
-            this.sortDirection = columnString.includes("Added") ? "desc" : "asc";
+            this.sortColumn = normalizedColumn;
+            this.sortDirection = this.plugin.resolveLibraryColumnField(normalizedColumn) === "dateAdded" ? "desc" : "asc";
           }
           this.plugin.settings.libraryViewSortColumn = this.sortColumn;
           this.plugin.settings.libraryViewSortDirection = this.sortDirection;
@@ -4542,27 +4576,34 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
         filteredEntries.forEach((entry) => {
           const row = tbody.insertRow();
           visibleColumns.forEach((columnString) => {
-            const parts = columnString.split("|");
+            var _a, _b;
+            const normalizedColumn = this.plugin.normalizeLibraryColumn(columnString);
+            const parts = normalizedColumn.split("|");
             const label = parts[0];
-            const field = parts[1] || label;
+            const field = this.plugin.resolveLibraryColumnField(normalizedColumn);
+            const noteTitle = ((_a = entry.noteFile) == null ? void 0 : _a.basename) || ((_b = entry.notePathShort.split("/").pop()) == null ? void 0 : _b.replace(/\.md$/i, "")) || entry.citeKey;
             if (field === "Obsidian Notes") {
               const citeCell = row.insertCell();
-              const noteLink = citeCell.createEl("a", { text: entry.citeKey, href: "#" });
+              const noteLink = citeCell.createEl("a", { text: noteTitle, href: "#" });
               noteLink.addEventListener("click", (event) => {
                 event.preventDefault();
                 this.plugin.openOrCreateLibraryEntryNote(entry);
               });
               return;
             }
-            if (field === "Year") {
+            if (field === "citationKey") {
+              row.insertCell().setText(entry.citeKey);
+              return;
+            }
+            if (field === "date" || field === "Year") {
               row.insertCell().setText(entry.year);
               return;
             }
-            if (field === "Type") {
+            if (field === "itemType" || field === "Type") {
               row.insertCell().setText(entry.itemType);
               return;
             }
-            if (field === "Title") {
+            if (field === "title" || field === "Title") {
               const titleCell = row.insertCell();
               if (entry.pdfLink !== "") {
                 const titleLink = titleCell.createEl("a", { text: entry.title, href: "#" });
@@ -4575,19 +4616,19 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
               }
               return;
             }
-            if (field === "Authors") {
+            if (field === "creators" || field === "Authors") {
               row.insertCell().setText(entry.authors);
               return;
             }
-            if (field === "Publication") {
+            if (field === "publicationTitle" || field === "Publication") {
               row.insertCell().setText(entry.publication);
               return;
             }
-            if (field === "Tags") {
+            if (field === "tags" || field === "Tags") {
               row.insertCell().setText(entry.tags);
               return;
             }
-            if (field === "Added") {
+            if (field === "dateAdded" || field === "Added") {
               row.insertCell().setText(entry.dateAddedShort);
               return;
             }
@@ -4763,22 +4804,32 @@ var MyPlugin = class extends import_obsidian6.Plugin {
   }
   activateLibraryViewInSidebar() {
     return __async(this, null, function* () {
-      this.app.workspace.detachLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
-      yield this.app.workspace.getRightLeaf(false).setViewState({
+      const existingLeaf = this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE).find((leaf2) => leaf2.getRoot() === this.app.workspace.rightSplit);
+      if (existingLeaf) {
+        this.app.workspace.revealLeaf(existingLeaf);
+        return;
+      }
+      const leaf = this.app.workspace.getRightLeaf(false);
+      yield leaf.setViewState({
         type: ZOTERO_LIBRARY_VIEW_TYPE,
         active: true
       });
-      this.app.workspace.revealLeaf(this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE)[0]);
+      this.app.workspace.revealLeaf(leaf);
     });
   }
   activateLibraryViewInTab() {
     return __async(this, null, function* () {
-      this.app.workspace.detachLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
-      yield this.app.workspace.getLeaf(true).setViewState({
+      const existingLeaf = this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE).find((leaf2) => leaf2.getRoot() !== this.app.workspace.rightSplit && leaf2.getRoot() !== this.app.workspace.leftSplit);
+      if (existingLeaf) {
+        this.app.workspace.revealLeaf(existingLeaf);
+        return;
+      }
+      const leaf = this.app.workspace.getLeaf(true);
+      yield leaf.setViewState({
         type: ZOTERO_LIBRARY_VIEW_TYPE,
         active: true
       });
-      this.app.workspace.revealLeaf(this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE)[0]);
+      this.app.workspace.revealLeaf(leaf);
     });
   }
   findOpenLeafForFile(file) {
@@ -4830,14 +4881,28 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     });
   }
   parseLibraryViewColumns(value) {
-    const parsed = String(value || "").split(",").map((column) => column.trim()).filter((column) => column !== "");
+    const parsed = String(value || "").split(",").map((column) => this.normalizeLibraryColumn(column.trim())).filter((column) => column !== "");
     if (parsed.length > 0) {
       return parsed;
     }
     return BUILT_IN_LIBRARY_COLUMNS.slice();
   }
+  normalizeLibraryColumn(column) {
+    return LEGACY_LIBRARY_COLUMN_MAP[column] || column;
+  }
+  resolveLibraryColumnField(column) {
+    const normalizedColumn = this.normalizeLibraryColumn(column);
+    const parts = normalizedColumn.split("|");
+    if (parts.length >= 2) {
+      return parts[1] || parts[0];
+    }
+    return BUILT_IN_LIBRARY_FIELD_MAP[normalizedColumn] || normalizedColumn;
+  }
   getAvailableLibraryViewColumns() {
     return Array.from(new Set(BUILT_IN_LIBRARY_COLUMNS.concat(this.discoveredLibraryFields || [])));
+  }
+  getAvailableLibrarySourceFields() {
+    return Array.from(new Set(Object.values(BUILT_IN_LIBRARY_FIELD_MAP).concat(this.discoveredLibraryFields || [])));
   }
   getLibraryViewColumns() {
     const configuredColumns = this.settings.libraryViewColumns;
@@ -4850,34 +4915,40 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     return this.getAvailableLibraryViewColumns();
   }
   compareLibraryEntries(firstEntry, secondEntry, column, direction) {
-    const parts = column.split("|");
-    const label = parts[0];
-    const field = parts[1] || label;
+    const normalizedColumn = this.normalizeLibraryColumn(column);
+    const field = this.resolveLibraryColumnField(normalizedColumn);
     const directionFactor = direction === "desc" ? -1 : 1;
+    const getLibraryEntryNoteTitle = (entry) => {
+      var _a, _b;
+      return ((_a = entry.noteFile) == null ? void 0 : _a.basename) || ((_b = entry.notePathShort.split("/").pop()) == null ? void 0 : _b.replace(/\.md$/i, "")) || entry.citeKey;
+    };
     let firstValue = "";
     let secondValue = "";
     if (field === "Obsidian Notes") {
+      firstValue = getLibraryEntryNoteTitle(firstEntry);
+      secondValue = getLibraryEntryNoteTitle(secondEntry);
+    } else if (field === "citationKey") {
       firstValue = firstEntry.citeKey;
       secondValue = secondEntry.citeKey;
-    } else if (field === "Year") {
+    } else if (field === "date" || field === "Year") {
       firstValue = firstEntry.year;
       secondValue = secondEntry.year;
-    } else if (field === "Type") {
+    } else if (field === "itemType" || field === "Type") {
       firstValue = firstEntry.itemType;
       secondValue = secondEntry.itemType;
-    } else if (field === "Title") {
+    } else if (field === "title" || field === "Title") {
       firstValue = firstEntry.title;
       secondValue = secondEntry.title;
-    } else if (field === "Authors") {
+    } else if (field === "creators" || field === "Authors") {
       firstValue = firstEntry.authors;
       secondValue = secondEntry.authors;
-    } else if (field === "Publication") {
+    } else if (field === "publicationTitle" || field === "Publication") {
       firstValue = firstEntry.publication;
       secondValue = secondEntry.publication;
-    } else if (field === "Tags") {
+    } else if (field === "tags" || field === "Tags") {
       firstValue = firstEntry.tags;
       secondValue = secondEntry.tags;
-    } else if (field === "Added") {
+    } else if (field === "dateAdded" || field === "Added") {
       firstValue = firstEntry.dateAdded;
       secondValue = secondEntry.dateAdded;
     } else if (field === "Actions") {
@@ -5003,17 +5074,6 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     const directMatch = this.app.vault.getAbstractFileByPath(normalizedPath) || this.app.vault.getFileByPath(normalizedPath);
     if (directMatch != null)
       return directMatch;
-    const exportPath = (0, import_obsidian6.normalizePath)(this.settings.exportPath || "").replace(/^\/+/, "");
-    const expectedBasename = `@${selectedEntry.citationKey}`;
-    const markdownFiles = this.app.vault.getMarkdownFiles();
-    for (const file of markdownFiles) {
-      const normalizedFilePath = (0, import_obsidian6.normalizePath)(file.path).replace(/^\/+/, "");
-      if (exportPath !== "" && !normalizedFilePath.startsWith(exportPath + "/"))
-        continue;
-      if (file.basename === expectedBasename) {
-        return file;
-      }
-    }
     return null;
   }
   buildLibraryEntries(data) {

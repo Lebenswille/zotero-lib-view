@@ -30,6 +30,11 @@ This version introduces a **library-first workflow** and several quality-of-life
 
 ## Installation
 
+### Rename Notice
+This plugin has been renamed to **Zotero Library View** to comply with Obsidian community plugin naming guidelines. Because the plugin ID changed, existing users need to reinstall the plugin in the new `.obsidian/plugins/zotero-library-view/` folder.
+
+To switch without losing settings, copy your existing `data.json` from the old plugin folder into the new plugin folder before enabling **Zotero Library View**.
+
 ### Manual Installation
 1. Download the latest release from GitHub.
 2. Unzip or clone the release into your vault's `.obsidian/plugins/zotero-library-view/` directory.

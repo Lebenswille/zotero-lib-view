@@ -1,7 +1,7 @@
 {
   "id": "zotero-lib-view",
   "name": "Zotero Library View",
-  "version": "1.2.11",
+  "version": "1.2.12",
   "minAppVersion": "0.12.0",
   "description": "View and manage your Zotero library from a vault.",
   "author": "Lebenswille",

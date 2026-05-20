@@ -117,7 +117,7 @@ class ZoteroLibraryView extends ItemView {
 	async renderLibrary() {
 		const container = this.contentEl;
 		container.empty();
-		container.addClass("zotero-library-view");
+		container.addClass("zotero-lib-view");
 
 		const data: any = await this.plugin.loadBibData(true);
 		if (data == null) {

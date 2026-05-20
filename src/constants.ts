@@ -104,7 +104,7 @@ export const templateAdmonition = "# {{title}}\n" +
 	"{{PDFNotes}}"
 
 
-export const ZOTERO_LIBRARY_VIEW_TYPE = "zotero-library-view";
+export const ZOTERO_LIBRARY_VIEW_TYPE = "zotero-lib-view";
 export const ZOTERO_LIBRARY_HEADER_BUTTON_ID = "zotero-library-header-button";
 export const BUILT_IN_LIBRARY_COLUMNS = ["Obsidian Notes", "Year", "Type", "Title", "Authors", "Publication", "Tags", "Collections", "Parent Collections", "Added", "Actions"];
 export const DEFAULT_LIBRARY_VIEW_COLUMNS = ["Obsidian Notes", "Year", "Title", "Publication", "Tags", "Added", "Action|Actions"];

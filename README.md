@@ -2,7 +2,7 @@
 
 # Zotero Lib View
 
-This project is a major enhancement of the original [bibnotes](https://github.com/stefanopagliari/bibnotes) project by Stefano Pagliari, and is maintained at [Lebenswille/zotero-library-in-obsidian](https://github.com/Lebenswille/zotero-library-in-obsidian).
+This project is a major enhancement of the original [bibnotes](https://github.com/stefanopagliari/bibnotes) project by Stefano Pagliari, and is maintained at [Lebenswille/zotero-lib-view](https://github.com/Lebenswille/zotero-lib-view).
 
 Zotero Lib View is a comprehensive tool for importing, updating, and browsing your Zotero library directly inside Obsidian. It retains the powerful note-generation and annotation-formatting workflow of the original project while adding a structured, in-app Library View designed for managing reference-to-note connections seamlessly.
 
@@ -30,10 +30,8 @@ This version introduces a **library-first workflow** and several quality-of-life
 
 ## Installation
 
-### Rename Notice
-This plugin has been renamed to **Zotero Lib View** to comply with Obsidian community plugin naming guidelines. Because the plugin ID changed, existing users need to reinstall the plugin in the new `.obsidian/plugins/zotero-lib-view/` folder.
-
-To switch without losing settings, copy your existing `data.json` from the old plugin folder into the new plugin folder before enabling **Zotero Lib View**.
+### Upgrading from bibnotes / Zotero Library View
+This plugin was previously known as **bibnotes** and later **Zotero Library View**. The plugin ID is now `zotero-lib-view`. If you are upgrading from an older version, move (or copy) your existing `data.json` into `.obsidian/plugins/zotero-lib-view/` to preserve your settings.
 
 ### Manual Installation
 1. Download the latest release from GitHub.
@@ -42,7 +40,7 @@ To switch without losing settings, copy your existing `data.json` from the old p
 
 ### Via BRAT
 If you have the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat/) installed:
-1. Use `Lebenswille/zotero-library-in-obsidian` to add it as a Beta plugin.
+1. Use `Lebenswille/zotero-lib-view` to add it as a Beta plugin.
 2. Enable it in the Community plugins tab.
 
 ---
@@ -226,6 +224,6 @@ When updating an existing note, you can decide whether to:
 ## Credits
 
 - This plugin is a fork of [bibnotes](https://github.com/stefanopagliari/bibnotes) by Stefano Pagliari.
-- Maintained and Enhanced by [Lebenswille](https://github.com/Lebenswille).
+- Maintained and enhanced by [Lebenswille](https://github.com/Lebenswille/zotero-lib-view).
 
 ---

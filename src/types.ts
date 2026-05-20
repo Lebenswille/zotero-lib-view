@@ -168,6 +168,8 @@ export interface LibraryEntry {
 	publication: string;
 	tags: string;
 	tagsArray: string[];
+	collections: string;
+	parentCollections: string;
 	dateAdded: string;
 	dateAddedShort: string;
 	url: string;

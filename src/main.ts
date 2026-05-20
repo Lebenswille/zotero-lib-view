@@ -66,6 +66,8 @@ const BUILT_IN_LIBRARY_FIELD_MAP: Record<string, string> = {
 	"Authors": "creators",
 	"Publication": "publicationTitle",
 	"Tags": "tags",
+	"Collections": "collections",
+	"Parent Collections": "parentCollections",
 	"Added": "dateAdded",
 	"Action": "Actions",
 	"Actions": "Actions",
@@ -270,6 +272,8 @@ class ZoteroLibraryView extends ItemView {
 					if (field === "creators" || field === "Authors") { row.insertCell().setText(entry.authors); return; }
 					if (field === "publicationTitle" || field === "Publication") { row.insertCell().setText(entry.publication); return; }
 					if (field === "tags" || field === "Tags") { row.insertCell().setText(entry.tags); return; }
+					if (field === "collections" || field === "Collections") { row.insertCell().setText(entry.collections); return; }
+					if (field === "parentCollections" || field === "Parent Collections") { row.insertCell().setText(entry.parentCollections); return; }
 					if (field === "dateAdded" || field === "Added") { row.insertCell().setText(entry.dateAddedShort); return; }
 
 					if (field === "Actions") {
@@ -646,6 +650,12 @@ export default class MyPlugin extends Plugin {
 		} else if (field === "tags" || field === "Tags") {
 			firstValue = firstEntry.tags;
 			secondValue = secondEntry.tags;
+		} else if (field === "collections" || field === "Collections") {
+			firstValue = firstEntry.collections;
+			secondValue = secondEntry.collections;
+		} else if (field === "parentCollections" || field === "Parent Collections") {
+			firstValue = firstEntry.parentCollections;
+			secondValue = secondEntry.parentCollections;
 		} else if (field === "dateAdded" || field === "Added") {
 			firstValue = firstEntry.dateAdded;
 			secondValue = secondEntry.dateAdded;
@@ -810,14 +820,18 @@ export default class MyPlugin extends Plugin {
 			const year = normalizeYearForLibrary(selectedEntry.date);
 			const publication = selectedEntry.publicationTitle || "";
 			const title = selectedEntry.title || "";
+			const collections = getCollectionsForLibraryEntry(selectedEntry, data, divider);
+			const parentCollections = getParentCollectionsForLibraryEntry(selectedEntry, data, divider);
 
 			const customFieldValues: Record<string, string> = {};
 			const searchValues: string[] = [];
 
 			collectLibrarySearchValues(selectedEntry, searchValues);
+			if (collections !== "") searchValues.push(collections);
+			if (parentCollections !== "") searchValues.push(parentCollections);
 
 			const fieldMappings: Record<string, string> = {};
-			this.settings.libraryViewColumns.forEach(col => {
+			this.getLibraryViewColumns().forEach(col => {
 				const parts = col.split("|");
 				if (parts.length >= 3 && parts[2]) {
 					fieldMappings[parts[1] || parts[0]] = parts[2];
@@ -838,6 +852,8 @@ export default class MyPlugin extends Plugin {
 				publication,
 				tags: tagsArray.join(divider),
 				tagsArray,
+				collections,
+				parentCollections,
 				dateAdded: selectedEntry.dateAdded || "",
 				dateAddedShort: selectedEntry.dateAdded ? String(selectedEntry.dateAdded).slice(0, 10) : "",
 				url: selectedEntry.url || "",
@@ -3613,6 +3629,58 @@ function normalizeYearForLibrary(date: string): string {
 function getTagsForLibraryEntry(entry: any): string[] {
 	if (!entry.tags || !Array.isArray(entry.tags)) return [];
 	return entry.tags.map((t: any) => t.tag || t).filter((t: any) => !!t);
+}
+
+function getCollectionsForLibraryEntry(entry: any, data: any, divider: string): string {
+	return getCollectionNamesForLibraryEntry(entry, data, divider, false);
+}
+
+function getParentCollectionsForLibraryEntry(entry: any, data: any, divider: string): string {
+	return getCollectionNamesForLibraryEntry(entry, data, divider, true);
+}
+
+function getCollectionNamesForLibraryEntry(entry: any, data: any, divider: string, parentsOnly: boolean): string {
+	const selectedID = entry.itemID == null ? "" : String(entry.itemID);
+	const exportedCollections = data?.collections;
+	const directCollections = formatLibraryFieldValue(entry.collections, divider);
+	if (selectedID === "" || exportedCollections == null) return parentsOnly ? "" : directCollections;
+
+	const collections = Object.values(exportedCollections);
+	const collectionsByKey = new Map<string, any>();
+	collections.forEach((collection: any) => {
+		if (collection?.key != null) collectionsByKey.set(String(collection.key), collection);
+	});
+
+	const matchedCollections = collections
+		.filter((collection: any) => Array.isArray(collection?.items) && collection.items.map((item: any) => String(item)).includes(selectedID));
+
+	const selectedCollections = new Map<string, any>();
+	const addCollection = (collection: any) => {
+		if (collection == null) return;
+		const key = collection.key != null ? String(collection.key) : String(collection.name || "");
+		if (key !== "") selectedCollections.set(key, collection);
+	};
+
+	matchedCollections.forEach((collection: any) => {
+		if (!parentsOnly) addCollection(collection);
+		let parentKey = collection?.parent == null ? "" : String(collection.parent);
+		const seenParentKeys = new Set<string>();
+		while (parentKey !== "") {
+			if (seenParentKeys.has(parentKey)) break;
+			seenParentKeys.add(parentKey);
+			const parentCollection = collectionsByKey.get(parentKey);
+			if (parentCollection == null) break;
+			addCollection(parentCollection);
+			parentKey = parentCollection.parent == null ? "" : String(parentCollection.parent);
+		}
+	});
+
+	const collectionNames = Array.from(selectedCollections.values())
+		.map((collection: any) => collection?.name)
+		.filter((name: any): name is string => typeof name === "string" && name.trim() !== "")
+		.sort((first, second) => first.localeCompare(second));
+
+	return collectionNames.length > 0 ? collectionNames.join(divider) : parentsOnly ? "" : directCollections;
 }
 
 function formatPrimaryCreatorListForLibrary(creators: any[], divider: string, nameFormat: string): string {

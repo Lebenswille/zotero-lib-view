@@ -553,7 +553,7 @@ var init_constants = __esm({
     templateAdmonition = "# {{title}}\n\n``` ad-info\ntitle: Metadata\n- **CiteKey**: {{citekey}}\n- **Type**: {{itemType}}\n- **Author**: {{author}}\n- **Editor**: {{editor}}\n- **Translator**: {{translator}}\n- **Publisher**: {{publisher}}\n- **Location**: {{place}}\n- **Series**: {{series}}\n- **Series Number**: {{seriesNumber}}\n- **Journal**: {{publicationTitle}}\n- **Volume**: {{volume}}\n- **Issue**: {{issue}}\n- **Pages**: {{pages}}\n- **Year**: {{year}} \n- **DOI**: {{DOI}}\n- **ISSN**: {{ISSN}}\n- **ISBN**: {{ISBN}}\n```\n```ad-quote\ntitle: Abstract\n{{abstractNote}}\n```\n```ad-abstract\ntitle: Files and Links\n- **Url**: {{url}}\n- **Uri**: {{uri}}\n- **Eprint**: {{eprint}}\n- **File**: {{file}}\n- **Local Library**: [Zotero]({{localLibraryLink}})\n```\n```ad-note\ntitle: Tags and Collections\n- **Keywords**: {{keywordsAll}}\n- **Collections**: {{collectionsParent}}\n```\n\n----\n\n## Comments\n{{UserNotes}}\n\n\n----\n\n## Extracted Annotations\n{{PDFNotes}}";
     ZOTERO_LIBRARY_VIEW_TYPE = "zotero-library-view";
     ZOTERO_LIBRARY_HEADER_BUTTON_ID = "zotero-library-header-button";
-    BUILT_IN_LIBRARY_COLUMNS = ["Obsidian Notes", "Year", "Type", "Title", "Authors", "Publication", "Tags", "Added", "Actions"];
+    BUILT_IN_LIBRARY_COLUMNS = ["Obsidian Notes", "Year", "Type", "Title", "Authors", "Publication", "Tags", "Collections", "Parent Collections", "Added", "Actions"];
     DEFAULT_LIBRARY_VIEW_COLUMNS = ["Obsidian Notes", "Year", "Title", "Publication", "Tags", "Added", "Action|Actions"];
     EXCLUDED_DYNAMIC_LIBRARY_FIELDS = new Set(["citationKey", "date", "itemType", "title", "creators", "publicationTitle", "tags", "dateAdded", "url", "select", "uri"]);
     DEFAULT_SETTINGS = {
@@ -4434,6 +4434,8 @@ var BUILT_IN_LIBRARY_FIELD_MAP = {
   "Authors": "creators",
   "Publication": "publicationTitle",
   "Tags": "tags",
+  "Collections": "collections",
+  "Parent Collections": "parentCollections",
   "Added": "dateAdded",
   "Action": "Actions",
   "Actions": "Actions"
@@ -4626,6 +4628,14 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
             }
             if (field === "tags" || field === "Tags") {
               row.insertCell().setText(entry.tags);
+              return;
+            }
+            if (field === "collections" || field === "Collections") {
+              row.insertCell().setText(entry.collections);
+              return;
+            }
+            if (field === "parentCollections" || field === "Parent Collections") {
+              row.insertCell().setText(entry.parentCollections);
               return;
             }
             if (field === "dateAdded" || field === "Added") {
@@ -4948,6 +4958,12 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     } else if (field === "tags" || field === "Tags") {
       firstValue = firstEntry.tags;
       secondValue = secondEntry.tags;
+    } else if (field === "collections" || field === "Collections") {
+      firstValue = firstEntry.collections;
+      secondValue = secondEntry.collections;
+    } else if (field === "parentCollections" || field === "Parent Collections") {
+      firstValue = firstEntry.parentCollections;
+      secondValue = secondEntry.parentCollections;
     } else if (field === "dateAdded" || field === "Added") {
       firstValue = firstEntry.dateAdded;
       secondValue = secondEntry.dateAdded;
@@ -5096,11 +5112,17 @@ var MyPlugin = class extends import_obsidian6.Plugin {
       const year = normalizeYearForLibrary(selectedEntry.date);
       const publication = selectedEntry.publicationTitle || "";
       const title = selectedEntry.title || "";
+      const collections = getCollectionsForLibraryEntry(selectedEntry, data, divider);
+      const parentCollections = getParentCollectionsForLibraryEntry(selectedEntry, data, divider);
       const customFieldValues = {};
       const searchValues = [];
       collectLibrarySearchValues(selectedEntry, searchValues);
+      if (collections !== "")
+        searchValues.push(collections);
+      if (parentCollections !== "")
+        searchValues.push(parentCollections);
       const fieldMappings = {};
-      this.settings.libraryViewColumns.forEach((col) => {
+      this.getLibraryViewColumns().forEach((col) => {
         const parts = col.split("|");
         if (parts.length >= 3 && parts[2]) {
           fieldMappings[parts[1] || parts[0]] = parts[2];
@@ -5119,6 +5141,8 @@ var MyPlugin = class extends import_obsidian6.Plugin {
         publication,
         tags: tagsArray.join(divider),
         tagsArray,
+        collections,
+        parentCollections,
         dateAdded: selectedEntry.dateAdded || "",
         dateAddedShort: selectedEntry.dateAdded ? String(selectedEntry.dateAdded).slice(0, 10) : "",
         url: selectedEntry.url || "",
@@ -6610,6 +6634,52 @@ function getTagsForLibraryEntry(entry) {
   if (!entry.tags || !Array.isArray(entry.tags))
     return [];
   return entry.tags.map((t) => t.tag || t).filter((t) => !!t);
+}
+function getCollectionsForLibraryEntry(entry, data, divider) {
+  return getCollectionNamesForLibraryEntry(entry, data, divider, false);
+}
+function getParentCollectionsForLibraryEntry(entry, data, divider) {
+  return getCollectionNamesForLibraryEntry(entry, data, divider, true);
+}
+function getCollectionNamesForLibraryEntry(entry, data, divider, parentsOnly) {
+  const selectedID = entry.itemID == null ? "" : String(entry.itemID);
+  const exportedCollections = data == null ? void 0 : data.collections;
+  const directCollections = formatLibraryFieldValue(entry.collections, divider);
+  if (selectedID === "" || exportedCollections == null)
+    return parentsOnly ? "" : directCollections;
+  const collections = Object.values(exportedCollections);
+  const collectionsByKey = new Map();
+  collections.forEach((collection) => {
+    if ((collection == null ? void 0 : collection.key) != null)
+      collectionsByKey.set(String(collection.key), collection);
+  });
+  const matchedCollections = collections.filter((collection) => Array.isArray(collection == null ? void 0 : collection.items) && collection.items.map((item) => String(item)).includes(selectedID));
+  const selectedCollections = new Map();
+  const addCollection = (collection) => {
+    if (collection == null)
+      return;
+    const key = collection.key != null ? String(collection.key) : String(collection.name || "");
+    if (key !== "")
+      selectedCollections.set(key, collection);
+  };
+  matchedCollections.forEach((collection) => {
+    if (!parentsOnly)
+      addCollection(collection);
+    let parentKey = (collection == null ? void 0 : collection.parent) == null ? "" : String(collection.parent);
+    const seenParentKeys = new Set();
+    while (parentKey !== "") {
+      if (seenParentKeys.has(parentKey))
+        break;
+      seenParentKeys.add(parentKey);
+      const parentCollection = collectionsByKey.get(parentKey);
+      if (parentCollection == null)
+        break;
+      addCollection(parentCollection);
+      parentKey = parentCollection.parent == null ? "" : String(parentCollection.parent);
+    }
+  });
+  const collectionNames = Array.from(selectedCollections.values()).map((collection) => collection == null ? void 0 : collection.name).filter((name) => typeof name === "string" && name.trim() !== "").sort((first, second) => first.localeCompare(second));
+  return collectionNames.length > 0 ? collectionNames.join(divider) : parentsOnly ? "" : directCollections;
 }
 function formatPrimaryCreatorListForLibrary(creators, divider, nameFormat) {
   if (!creators || creators.length === 0)

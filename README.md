@@ -15,7 +15,7 @@ This version introduces a **library-first workflow** and several quality-of-life
 - **Sidebar or Tab**: Open the library view as a normal tab or pin it to the right sidebar.
 - **Custom Obsidian URI Support**: Use links like `obsidian://zotero-library?vault=YourVault&view=tab` to jump straight into your library.
 - **Automatic Sync**: Watches for changes in your exported `My Library.json` and refreshes the view.
-- **Configurable Columns**: Customize which metadata fields are visible (Notes, Year, Type, Title, Authors, Publication, Tags, Added, etc.) and their order.
+- **Configurable Columns**: Customize which metadata fields are visible (Notes, Year, Type, Title, Authors, Publication, Tags, Collections, Parent Collections, Added, etc.) and their order.
 - **Note-Page Integration**: Adds a header button to your literature notes to quickly jump back to the library entry.
 
 ## Recommended Workflow
@@ -51,7 +51,7 @@ If you have the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat/) ins
 
 The Library View is the core enhancement of this fork. It allows you to interact with your bibliography as a structured database within your workspace.
 
-- **Configurable Columns**: Choose from `Obsidian Notes`, `Year`, `Type`, `Title`, `Authors`, `Publication`, `Tags`, `Added`, or any custom field provided by Better BibTeX.
+- **Configurable Columns**: Choose from `Obsidian Notes`, `Year`, `Type`, `Title`, `Authors`, `Publication`, `Tags`, `Collections`, `Parent Collections`, `Added`, or any custom field provided by Better BibTeX.
 - **Live Search**: The search bar searches across the *full* library record, including abstract and tags, even if they aren't visible as columns.
 - **Sorting**: Click any sortable header to reorder your library.
 - **Note-Aware**: Clicking the cite key opens the note; clicking `Actions` buttons lets you jump to Zotero, Web, or the PDF.

@@ -3804,7 +3804,7 @@ var SettingTab = class extends import_obsidian5.PluginSettingTab {
     const { containerEl, plugin } = this;
     const { settings } = plugin;
     containerEl.empty();
-    containerEl.createEl("h1", { text: "Zotero Library View" });
+    containerEl.createEl("h1", { text: "Zotero Lib View" });
     containerEl.createEl("a", { text: "Created by Lebenswille", href: "https://github.com/Lebenswille/zotero-library-in-obsidian" });
     containerEl.createEl("h2", { text: "Import Library" });
     const importLibrary = containerEl.createEl("details");
@@ -4461,7 +4461,7 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
     return ZOTERO_LIBRARY_VIEW_TYPE;
   }
   getDisplayText() {
-    return "Zotero Library View";
+    return "Zotero Lib View";
   }
   getIcon() {
     return "library";
@@ -4482,13 +4482,13 @@ var ZoteroLibraryView = class extends import_obsidian6.ItemView {
       container.addClass("zotero-lib-view");
       const data = yield this.plugin.loadBibData(true);
       if (data == null) {
-        container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the Zotero Library View settings." });
+        container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the Zotero Lib View settings." });
         return;
       }
       const entries = this.plugin.buildLibraryEntries(data);
       const header = container.createDiv({ cls: "zotero-library-header" });
       const titleWrap = header.createDiv({ cls: "zotero-library-title-wrap" });
-      titleWrap.createEl("h2", { text: "Zotero Library View" });
+      titleWrap.createEl("h2", { text: "Zotero Lib View" });
       titleWrap.createEl("p", {
         text: `Source: ${this.plugin.settings.bibPath || "My Library.json"}`
       });
@@ -4714,19 +4714,19 @@ var MyPlugin = class extends import_obsidian6.Plugin {
       });
       this.addCommand({
         id: "open-library-view",
-        name: "Open Zotero Library View in Sidebar",
+        name: "Open Zotero Lib View in Sidebar",
         callback: () => __async(this, null, function* () {
           yield this.activateLibraryViewInSidebar();
         })
       });
       this.addCommand({
         id: "open-library-view-tab",
-        name: "Open Zotero Library View in Tab",
+        name: "Open Zotero Lib View in Tab",
         callback: () => __async(this, null, function* () {
           yield this.activateLibraryViewInTab();
         })
       });
-      this.addRibbonIcon("library", "Open Zotero Library View", () => __async(this, null, function* () {
+      this.addRibbonIcon("library", "Open Zotero Lib View", () => __async(this, null, function* () {
         yield this.activateLibraryViewInTab();
       }));
       this.registerObsidianProtocolHandler("zotero-library", (params) => __async(this, null, function* () {
@@ -4801,7 +4801,7 @@ var MyPlugin = class extends import_obsidian6.Plugin {
     buttonContainer.id = ZOTERO_LIBRARY_HEADER_BUTTON_ID;
     buttonContainer.addClass("clickable-icon");
     buttonContainer.addClass("view-action");
-    buttonContainer.setAttribute("aria-label", "Open Zotero Library View");
+    buttonContainer.setAttribute("aria-label", "Open Zotero Lib View");
     (0, import_obsidian6.setIcon)(buttonContainer, "library");
     buttonContainer.addEventListener("click", () => __async(this, null, function* () {
       yield this.activateLibraryViewInTab();
@@ -5044,11 +5044,11 @@ var MyPlugin = class extends import_obsidian6.Plugin {
           return;
         const updatedEntries = yield this.updateLibraryEntries(data);
         if (updatedEntries.length > 0) {
-          new import_obsidian6.Notice(`Zotero Library View auto-imported ${updatedEntries.length} updated reference(s)`);
+          new import_obsidian6.Notice(`Zotero Lib View auto-imported ${updatedEntries.length} updated reference(s)`);
         }
       } catch (error) {
         console.log(error);
-        new import_obsidian6.Notice("Zotero Library View auto-import failed");
+        new import_obsidian6.Notice("Zotero Lib View auto-import failed");
       } finally {
         this.isAutoImportRunning = false;
       }

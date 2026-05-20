@@ -1,10 +1,10 @@
 > Note: This plugin is vibe coded.
 
-# Zotero Library View
+# Zotero Lib View
 
 This project is a major enhancement of the original [bibnotes](https://github.com/stefanopagliari/bibnotes) project by Stefano Pagliari, and is maintained at [Lebenswille/zotero-library-in-obsidian](https://github.com/Lebenswille/zotero-library-in-obsidian).
 
-Zotero Library View is a comprehensive tool for importing, updating, and browsing your Zotero library directly inside Obsidian. It retains the powerful note-generation and annotation-formatting workflow of the original project while adding a structured, in-app Library View designed for managing reference-to-note connections seamlessly.
+Zotero Lib View is a comprehensive tool for importing, updating, and browsing your Zotero library directly inside Obsidian. It retains the powerful note-generation and annotation-formatting workflow of the original project while adding a structured, in-app Library View designed for managing reference-to-note connections seamlessly.
 
 ## What This Fork Adds
 
@@ -31,14 +31,14 @@ This version introduces a **library-first workflow** and several quality-of-life
 ## Installation
 
 ### Rename Notice
-This plugin has been renamed to **Zotero Library View** to comply with Obsidian community plugin naming guidelines. Because the plugin ID changed, existing users need to reinstall the plugin in the new `.obsidian/plugins/zotero-lib-view/` folder.
+This plugin has been renamed to **Zotero Lib View** to comply with Obsidian community plugin naming guidelines. Because the plugin ID changed, existing users need to reinstall the plugin in the new `.obsidian/plugins/zotero-lib-view/` folder.
 
-To switch without losing settings, copy your existing `data.json` from the old plugin folder into the new plugin folder before enabling **Zotero Library View**.
+To switch without losing settings, copy your existing `data.json` from the old plugin folder into the new plugin folder before enabling **Zotero Lib View**.
 
 ### Manual Installation
 1. Download the latest release from GitHub.
 2. Unzip or clone the release into your vault's `.obsidian/plugins/zotero-lib-view/` directory.
-3. Enable "Zotero Library View" in the Community plugins settings.
+3. Enable "Zotero Lib View" in the Community plugins settings.
 
 ### Via BRAT
 If you have the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat/) installed:
@@ -82,7 +82,7 @@ The plugin introduces several commands to streamline your research:
 
 - **Create/Update Literature Note**: Prompts you to choose a reference from your library. If it hasn't been imported yet, a new note is generated. If it exists, its content is updated based on your "Save Manual Edits" settings. You can also select "Entire Library" to batch process everything.
 - **Update Library**: Automatically generates/updates all notes that have been modified in Zotero since the last sync.
-- **Open Zotero Library View (Tab/Sidebar)**: Opens the structured library interface.
+- **Open Zotero Lib View (Tab/Sidebar)**: Opens the structured library interface.
 - **Update Current Literature Note**: Refresh the metadata and annotations for the note currently active in your editor.
 
 ![](images/SelectCommandExample.png)

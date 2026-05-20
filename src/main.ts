@@ -101,7 +101,7 @@ class ZoteroLibraryView extends ItemView {
 	}
 
 	getDisplayText() {
-		return "Zotero Library View";
+		return "Zotero Lib View";
 	}
 
 	getIcon() {
@@ -121,7 +121,7 @@ class ZoteroLibraryView extends ItemView {
 
 		const data: any = await this.plugin.loadBibData(true);
 		if (data == null) {
-			container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the Zotero Library View settings." });
+			container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the Zotero Lib View settings." });
 			return;
 		}
 
@@ -129,7 +129,7 @@ class ZoteroLibraryView extends ItemView {
 
 		const header = container.createDiv({ cls: "zotero-library-header" });
 		const titleWrap = header.createDiv({ cls: "zotero-library-title-wrap" });
-		titleWrap.createEl("h2", { text: "Zotero Library View" });
+		titleWrap.createEl("h2", { text: "Zotero Lib View" });
 		titleWrap.createEl("p", {
 			text: `Source: ${this.plugin.settings.bibPath || "My Library.json"}`,
 		});
@@ -383,7 +383,7 @@ export default class MyPlugin extends Plugin {
 
 		this.addCommand({
 			id: "open-library-view",
-			name: "Open Zotero Library View in Sidebar",
+			name: "Open Zotero Lib View in Sidebar",
 			callback: async () => {
 				await this.activateLibraryViewInSidebar();
 			},
@@ -391,13 +391,13 @@ export default class MyPlugin extends Plugin {
 
 		this.addCommand({
 			id: "open-library-view-tab",
-			name: "Open Zotero Library View in Tab",
+			name: "Open Zotero Lib View in Tab",
 			callback: async () => {
 				await this.activateLibraryViewInTab();
 			},
 		});
 
-		this.addRibbonIcon("library", "Open Zotero Library View", async () => {
+		this.addRibbonIcon("library", "Open Zotero Lib View", async () => {
 			await this.activateLibraryViewInTab();
 		});
 
@@ -480,7 +480,7 @@ export default class MyPlugin extends Plugin {
 		buttonContainer.id = ZOTERO_LIBRARY_HEADER_BUTTON_ID;
 		buttonContainer.addClass("clickable-icon");
 		buttonContainer.addClass("view-action");
-		buttonContainer.setAttribute("aria-label", "Open Zotero Library View");
+		buttonContainer.setAttribute("aria-label", "Open Zotero Lib View");
 		setIcon(buttonContainer, "library");
 		buttonContainer.addEventListener("click", async () => {
 			await this.activateLibraryViewInTab();
@@ -746,11 +746,11 @@ export default class MyPlugin extends Plugin {
 
 			const updatedEntries = await this.updateLibraryEntries(data);
 			if (updatedEntries.length > 0) {
-				new Notice(`Zotero Library View auto-imported ${updatedEntries.length} updated reference(s)`);
+				new Notice(`Zotero Lib View auto-imported ${updatedEntries.length} updated reference(s)`);
 			}
 		} catch (error) {
 			console.log(error);
-			new Notice("Zotero Library View auto-import failed");
+			new Notice("Zotero Lib View auto-import failed");
 		} finally {
 			this.isAutoImportRunning = false;
 		}
@@ -1871,7 +1871,7 @@ export default class MyPlugin extends Plugin {
 							const tempAnnotationType = this.getAnnotationType(
 								lineElements.inlineTagsArray[indexTag],
 								annotationCommentAll);
-							//Currently Zotero Library View can only incorporate one transformation. So as soon as one of the tags matches one transformation this is applied to the code (superseding the first character) and the loop is interrupted. The tag is removed from the list that is printed after the comment
+							//Currently Zotero Lib View can only incorporate one transformation. So as soon as one of the tags matches one transformation this is applied to the code (superseding the first character) and the loop is interrupted. The tag is removed from the list that is printed after the comment
 							if (tempAnnotationType != "noKey") {
 								lineElements.annotationType = tempAnnotationType;
 
@@ -3137,7 +3137,7 @@ export default class MyPlugin extends Plugin {
 
 			// Select the line to be searched
 
-			//Remove formatting added by Zotero Library View at the beginning of the line
+			//Remove formatting added by Zotero Lib View at the beginning of the line
 			let selectedNewLine = newNoteArray[indexLines];
 			selectedNewLine = selectedNewLine.trim();
 			selectedNewLine = selectedNewLine.replace(/^- /gm, "");
@@ -3157,7 +3157,7 @@ export default class MyPlugin extends Plugin {
 			selectedNewLine = selectedNewLine.replace(authorKey_Zotero, "");
 			selectedNewLine = selectedNewLine.replace(authorKey_Zotfile, "");
 
-			//Remove formatting added by Zotero Library View at the end of the line
+			//Remove formatting added by Zotero Lib View at the end of the line
 			selectedNewLine = selectedNewLine.replace(/=$/gm, "");
 			selectedNewLine = selectedNewLine.replace(/\**$/gm, "");
 			selectedNewLine = selectedNewLine.replace(/\*$/gm, "");
@@ -3540,7 +3540,7 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-// Helper functions for Zotero Library View
+// Helper functions for Zotero Lib View
 function discoverLibraryFieldNames(data: any): string[] {
 	if (data == null || !Array.isArray(data.items)) return [];
 	const fields = new Set<string>();

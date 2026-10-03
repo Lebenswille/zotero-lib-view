@@ -36,9 +36,7 @@ import {
 
 import {
 	createAuthorKey,
-	createLocalFileLink,
-	createLocalFilePathLink,
-	createZoteroReaderPathLink,
+	attachmentTemplateFields,
 	createCreatorList,
 	createNoteTitle,
 	makeWiki,
@@ -1218,24 +1216,9 @@ export default class MyPlugin extends Plugin {
 
 		}
 
-		//create field file
-		selectedEntry.file = createLocalFileLink(selectedEntry);
-		//create field path field
-		selectedEntry.filePath = createLocalFilePathLink(selectedEntry);
-		//create Zotero reader path field
-		console.log(selectedEntry.filePath)
-		selectedEntry.zoteroReaderLink = createZoteroReaderPathLink(selectedEntry);
-		console.log(selectedEntry.zoteroReaderLink)
-
-
-
-		// Create an array with all the fields
-		const entriesArray = Object.keys(selectedEntry);
-
-
-		//replace the single-value placeholders with the value of the field
-		note = replaceAllTemplates(entriesArray, note, selectedEntry);
-
+		// Derived attachment fields must not overwrite the exported metadata.
+		const templateEntry = attachmentTemplateFields(selectedEntry);
+		note = replaceAllTemplates(Object.keys(templateEntry), note, templateEntry);
 
 
 		//remove single backticks but retain triple backticks

@@ -125,9 +125,12 @@ Placeholders for links and files:
 - `{{localLibraryLink}}`: link target for the Zotero library entry.
 - `{{localLibrary}}`: Zotero library URI for the item.
 - `{{zoteroReaderLink}}`: link to open the specific attachment in the Zotero reader.
-- `{{file}}`: file information exported by Better BibTeX.
-- `{{localFile}}`: local file links for attachments.
-- `{{localFilePathLink}}`: local file path links for attachments.
+- `{{file}}`: file information exported by Better BibTeX; falls back to attachment links when absent.
+- `{{localFile}}`: local attachment links labeled with attachment titles.
+- `{{localFilePathLink}}`: local attachment links labeled with file paths.
+- `{{filePath}}`: legacy links that select attachments in Zotero.
+
+Local file links require attachment `path` values in the JSON export. Absolute paths are recommended; relative paths remain relative to the generated note. Attachments without a local path are skipped.
 
 Placeholders for people and citations:
 
@@ -227,3 +230,7 @@ When updating an existing note, you can decide whether to:
 - Maintained and enhanced by [Lebenswille](https://github.com/Lebenswille/zotero-lib-view).
 
 ---
+
+### Settings compatibility
+
+This build requires Obsidian 1.13.0 or newer. Settings use the native declarative settings interface, including file and folder suggestions in both the main window and a separate settings window. Existing saved settings are retained.

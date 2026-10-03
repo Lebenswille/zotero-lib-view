@@ -43,7 +43,7 @@ export function replaceTemplate(
 	find: string,
 	replace: string
 ) {
-	return stringAdd.replace(new RegExp(escapeRegExp(find), "g"), replace);
+	return stringAdd.replace(new RegExp(escapeRegExp(find), "g"), () => replace);
 }
 
 export const makeWiki = (str: string) => "[[" + str + "]]";
@@ -570,106 +570,72 @@ export function replaceMissingFields(
 	return copy;
 }
 
-export function createLocalFileLink(reference: Reference) {
-	//if there is no attachment, return placeholder
-	if (reference.attachments.length == 0) return "{{localFile}}";
-	const filesList: string[] = [];
-
-	for (
-		let attachmentindex = 0;
-		attachmentindex < reference.attachments.length;
-		attachmentindex++
-	) {
-		if (reference.attachments[attachmentindex].itemType !== "attachment")
-			continue;
-
-		//remove white spaces from file name
-		if (reference.attachments[attachmentindex].path == undefined) {
-			reference.attachments[attachmentindex].path = "";
-		}
-
-		const selectedfile: string =
-			"[" +
-			reference.attachments[attachmentindex].title +
-			"](file:///" + // added an extra "/" to make it work on Linux
-			encodeURI(reference.attachments[attachmentindex].path.replaceAll(" ", " ")) +
-			")"; //select the author
-
-
-		filesList.push(selectedfile);
+// Encode each path component so #, ?, %, and parentheses remain filename data.
+function localFileURL(filePath: string): string {
+	const normalized = filePath.replace(/\\/g, "/");
+	if (/^file:\/\//i.test(normalized)) {
+		try {
+			return new URL(normalized).href.replace(/[()]/g, c => c === "(" ? "%28" : "%29");
+		} catch { return ""; }
 	}
-	//turn the array into a string
-	const filesListString = filesList.join("; ");
-	return filesListString;
+	const encode = (value: string) => encodeURIComponent(value).replace(/[!'()*]/g,
+		c => "%" + c.charCodeAt(0).toString(16).toUpperCase());
+	const encoded = normalized.split("/").map((part, index) =>
+		index === 0 && /^[A-Za-z]:$/.test(part) ? part : encode(part)).join("/");
+	if (normalized.startsWith("//")) return "file:" + encoded;
+	if (normalized.startsWith("/")) return "file://" + encoded;
+	if (/^[A-Za-z]:\//.test(normalized)) return "file:///" + encoded;
+	// Relative exports must stay relative; do not invent a filesystem root.
+	return encoded;
+}
+
+function attachmentLinks(reference: Reference, usePathLabel: boolean): string {
+	const links: string[] = [];
+	for (const attachment of reference.attachments || []) {
+		if (attachment.itemType && attachment.itemType !== "attachment") continue;
+		if (typeof attachment.path !== "string" || !attachment.path.trim()) continue;
+		const target = localFileURL(attachment.path);
+		if (!target) continue;
+		const label = (usePathLabel ? attachment.path : attachment.title || attachment.path.split(/[\\/]/).pop() || "Attachment")
+			.replace(/\\/g, "\\\\").replace(/([\[\]])/g, "\\$1").replace(/[\r\n]+/g, " ");
+		links.push(`[${label}](${target})`);
+	}
+	return links.join("; ");
+}
+
+export function createLocalFileLink(reference: Reference) {
+	return attachmentLinks(reference, false) || "{{localFile}}";
 }
 
 export function createLocalFilePathLink(reference: Reference) {
-	//if there is no attachment, return placeholder
-	if (reference.attachments.length == 0) return "{{localFilePathLink}}";
-	const filesPathList: string[] = [];
+	return attachmentLinks(reference, true) || "{{localFilePathLink}}";
+}
 
-	for (
-		let attachmentindex = 0;
-		attachmentindex < reference.attachments.length;
-		attachmentindex++
-	) {
-		if (reference.attachments[attachmentindex].itemType !== "attachment")
-			continue;
+// Preserve the historical filePath placeholder (select the attachment in Zotero).
+export function createAttachmentSelectLink(reference: Reference) {
+	return (reference.attachments || [])
+		.filter(a => (!a.itemType || a.itemType === "attachment") && a.select)
+		.map(a => `[${(a.title || "Attachment").replace(/([\[\]])/g, "\\$1")}](${encodeURI(a.select)})`)
+		.join("; ") || "{{filePath}}";
+}
 
-		//remove white spaces from file name
-		if (reference.attachments[attachmentindex].select == undefined) {
-			reference.attachments[attachmentindex].select = "";
-		}
-
-		const selectedFilePath: string =
-			"[" +
-			reference.attachments[attachmentindex].title +
-			"](" +
-			encodeURI(reference.attachments[attachmentindex].select) +
-			")"; //select the author
-
-
-		filesPathList.push(selectedFilePath);
-	}
-	//turn the array into a string
-	const filesPathListString = filesPathList.join("; ");
-	return filesPathListString;
+export function attachmentTemplateFields(reference: Reference) {
+	const localFile = createLocalFileLink(reference);
+	return {
+		...reference,
+		file: reference.file || (localFile === "{{localFile}}" ? "{{file}}" : localFile),
+		localFile,
+		localFilePathLink: createLocalFilePathLink(reference),
+		filePath: createAttachmentSelectLink(reference),
+		zoteroReaderLink: createZoteroReaderPathLink(reference),
+	};
 }
 
 
 export function createZoteroReaderPathLink(reference: Reference) {
-	//if there is no attachment, return placeholder
-	if (reference.attachments.length == 0) return "{{localFilePathLink}}";
-	const filesPathList: string[] = [];
-
-	for (
-		let attachmentindex = 0;
-		attachmentindex < reference.attachments.length;
-		attachmentindex++
-	) {
-		if (reference.attachments[attachmentindex].itemType !== "attachment")
-			continue;
-
-		//remove white spaces from file name
-		if (reference.attachments[attachmentindex].select == undefined) {
-			reference.attachments[attachmentindex].select = "";
-		}
-
-		const selectedFilePath: string =
-			"[" +
-			reference.attachments[attachmentindex].title +
-			"](" +
-			encodeURI(reference.attachments[attachmentindex].select).replace(
-				"select",
-				"open-pdf"
-			) + ")"; //select the author
-
-
-		filesPathList.push(selectedFilePath);
-	}
-	//turn the array into a string
-	const filesPathListString = filesPathList.join("; ");
-	return filesPathListString;
+	const selected = createAttachmentSelectLink(reference);
+	return selected === "{{filePath}}" ? "{{zoteroReaderLink}}"
+		: selected.replace(/zotero:\/\/select\//g, "zotero://open-pdf/");
 }
 
 export function createNoteTitle(

@@ -5,7 +5,8 @@
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "node esbuild.config.mjs production"
+		"build": "node esbuild.config.mjs production",
+		"test": "node tests/attachment-templates.cjs && node tests/declarative-settings.cjs"
 	},
 	"keywords": [],
 	"author": "",
@@ -17,12 +18,11 @@
 		"@typescript-eslint/parser": "^5.2.0",
 		"builtin-modules": "^3.2.0",
 		"esbuild": "^0.13.15",
-		"obsidian": "^0.12.17",
+		"obsidian": "^1.13.0",
 		"tslib": "2.3.1",
 		"typescript": "^4.4.4"
 	},
 	"dependencies": {
-		"@popperjs/core": "^2.11.2",
 		"color-classifier": "^0.0.1",
 		"debugout.js": "^1.0.0",
 		"loglevel": "^1.8.0",

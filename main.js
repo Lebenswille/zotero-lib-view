@@ -67,9 +67,9 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 
-// node_modules/color-classifier/color-classifier.js
+// ../../../Users/panglibin/Documents/Vibe Coding/.obsidian/plugins/zotero-lib-view/node_modules/color-classifier/color-classifier.js
 var require_color_classifier = __commonJS({
-  "node_modules/color-classifier/color-classifier.js"(exports, module2) {
+  "../../../Users/panglibin/Documents/Vibe Coding/.obsidian/plugins/zotero-lib-view/node_modules/color-classifier/color-classifier.js"(exports, module2) {
     (function(global, factory) {
       typeof exports === "object" && typeof module2 !== "undefined" ? module2.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.ColorClassifier = factory();
     })(exports, function() {
@@ -551,7 +551,7 @@ __export(exports, {
 });
 var fs2 = __toModule(require("fs"));
 
-// node_modules/debugout.js/dist/debugout.min.js
+// ../../../Users/panglibin/Documents/Vibe Coding/.obsidian/plugins/zotero-lib-view/node_modules/debugout.js/dist/debugout.min.js
 var __assign = function() {
   return (__assign = Object.assign || function(t) {
     for (var e, o = 1, i = arguments.length; o < i; o++)
@@ -754,7 +754,7 @@ var import_color_classifier = __toModule(require_color_classifier());
 var import_obsidian4 = __toModule(require("obsidian"));
 var import_path2 = __toModule(require("path"));
 
-// node_modules/turndown/lib/turndown.browser.es.js
+// ../../../Users/panglibin/Documents/Vibe Coding/.obsidian/plugins/zotero-lib-view/node_modules/turndown/lib/turndown.browser.es.js
 function extend(destination) {
   for (var i = 1; i < arguments.length; i++) {
     var source = arguments[i];
@@ -1957,12 +1957,34 @@ function attachmentTemplateFields(reference) {
     localFile,
     localFilePathLink: createLocalFilePathLink(reference),
     filePath: createAttachmentSelectLink(reference),
-    zoteroReaderLink: createZoteroReaderPathLink(reference)
+    zoteroReaderLink: createZoteroReaderPathLink(reference),
+    zoteroReaderLinkYamlList: createZoteroReaderPathLinkYamlList(reference)
   });
 }
 function createZoteroReaderPathLink(reference) {
   const selected = createAttachmentSelectLink(reference);
   return selected === "{{filePath}}" ? "{{zoteroReaderLink}}" : selected.replace(/zotero:\/\/select\//g, "zotero://open-pdf/");
+}
+function createZoteroReaderPathLinkYamlList(reference) {
+  const readerURIs = new Set();
+  for (const attachment of reference.attachments || []) {
+    if (!attachment || attachment.itemType && attachment.itemType !== "attachment")
+      continue;
+    if (typeof attachment.select !== "string" || !attachment.select.trim())
+      continue;
+    try {
+      const uri = new URL(attachment.select.trim());
+      if (uri.protocol !== "zotero:" || !["select", "open-pdf"].includes(uri.host))
+        continue;
+      if (uri.username || uri.password)
+        continue;
+      if (!/^\/(?:library|groups\/\d+)\/items\/[A-Za-z0-9]+$/.test(uri.pathname))
+        continue;
+      readerURIs.add(uri.href.replace(/^zotero:\/\/select\//, "zotero://open-pdf/"));
+    } catch (e) {
+    }
+  }
+  return readerURIs.size ? Array.from(readerURIs, (uri) => `  - ${JSON.stringify(uri)}`).join("\n") : "  []";
 }
 function createNoteTitle(selectedEntry, exportTitle, exportPath) {
   exportTitle = exportTitle.replace("{{citeKey}}", selectedEntry.citationKey);

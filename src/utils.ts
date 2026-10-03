@@ -628,6 +628,7 @@ export function attachmentTemplateFields(reference: Reference) {
 		localFilePathLink: createLocalFilePathLink(reference),
 		filePath: createAttachmentSelectLink(reference),
 		zoteroReaderLink: createZoteroReaderPathLink(reference),
+		zoteroReaderLinkYamlList: createZoteroReaderPathLinkYamlList(reference),
 	};
 }
 
@@ -636,6 +637,29 @@ export function createZoteroReaderPathLink(reference: Reference) {
 	const selected = createAttachmentSelectLink(reference);
 	return selected === "{{filePath}}" ? "{{zoteroReaderLink}}"
 		: selected.replace(/zotero:\/\/select\//g, "zotero://open-pdf/");
+}
+
+// Properties store URI strings; Markdown labels belong in zoteroReaderLink instead.
+export function createZoteroReaderPathLinkYamlList(reference: Reference): string {
+	const readerURIs = new Set<string>();
+	for (const attachment of reference.attachments || []) {
+		if (!attachment || (attachment.itemType && attachment.itemType !== "attachment")) continue;
+		if (typeof attachment.select !== "string" || !attachment.select.trim()) continue;
+		try {
+			const uri = new URL(attachment.select.trim());
+			if (uri.protocol !== "zotero:" || !["select", "open-pdf"].includes(uri.host)) continue;
+			if (uri.username || uri.password) continue;
+			if (!/^\/(?:library|groups\/\d+)\/items\/[A-Za-z0-9]+$/.test(uri.pathname)) continue;
+			// Replace only the action, preserving group IDs, item keys, and query parameters.
+			readerURIs.add(uri.href.replace(/^zotero:\/\/select\//, "zotero://open-pdf/"));
+		} catch {
+			// Ignore malformed attachment addresses instead of emitting empty links.
+		}
+	}
+	// Indentation also keeps an empty list valid below a YAML property name.
+	return readerURIs.size
+		? Array.from(readerURIs, uri => `  - ${JSON.stringify(uri)}`).join("\n")
+		: "  []";
 }
 
 export function createNoteTitle(

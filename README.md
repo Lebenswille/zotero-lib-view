@@ -124,7 +124,8 @@ Placeholders for links and files:
 
 - `{{localLibraryLink}}`: link target for the Zotero library entry.
 - `{{localLibrary}}`: Zotero library URI for the item.
-- `{{zoteroReaderLink}}`: link to open the specific attachment in the Zotero reader.
+- `{{zoteroReaderLink}}`: Markdown links to open attachments in the Zotero reader (for the note body).
+- `{{zoteroReaderLinkYamlList}}`: a YAML list of plain Zotero reader URIs (for Properties/frontmatter).
 - `{{file}}`: file information exported by Better BibTeX; falls back to attachment links when absent.
 - `{{localFile}}`: local attachment links labeled with attachment titles.
 - `{{localFilePathLink}}`: local attachment links labeled with file paths.
@@ -174,6 +175,27 @@ This fork also adds YAML-friendly wikilink list placeholders for Obsidian Proper
   - "[[Collection A]]"
   - "[[Collection B]]"
   ```
+
+For multiple Zotero attachments in a list property, put `{{zoteroReaderLinkYamlList}}` on its own **unindented** line below the property name. Do not wrap it in quotes or prepend a list marker:
+
+```markdown
+---
+readerLinks:
+{{zoteroReaderLinkYamlList}}
+---
+```
+
+Example output:
+
+```yaml
+---
+readerLinks:
+  - "zotero://open-pdf/library/items/ABCD1234"
+  - "zotero://open-pdf/groups/12345/items/EFGH5678"
+---
+```
+
+The list contains plain URIs because Properties do not render Markdown links. Values are YAML-safe; attachment titles are not included. Missing or invalid attachment addresses are skipped, duplicates are removed, and an item without valid addresses produces an empty list (`readerLinks: []`). Existing missing-field settings do not remove this empty list. Use `{{zoteroReaderLink}}` in the note body when you want links with attachment titles.
 
 ### Note Title
 Specify the format of the note title (e.g., `{{citeKey}}`, `{{title}}`, `{{author}}`).

@@ -5,9 +5,9 @@ const esbuild = require('esbuild');
 
 function bundle(entry, obsidian) {
     const result = esbuild.buildSync({entryPoints: [entry], bundle: true, platform: 'node', format: 'cjs', external: ['obsidian'], write: false});
-    const context = {exports: {}, require: name => name === 'obsidian' ? obsidian : require(name)};
+    const context = {exports: {}, module: {exports: {}}, require: name => name === 'obsidian' ? obsidian : require(name)};
     vm.runInNewContext(result.outputFiles[0].text, context);
-    return context.exports;
+    return context.module.exports;
 }
 class PluginSettingTab {
     constructor(app, plugin) { this.app = app; this.plugin = plugin; this.updates = 0; }

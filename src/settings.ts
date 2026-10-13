@@ -1,7 +1,7 @@
-import type MyPlugin from "./main";
-import { App, PluginSettingTab, SettingDefinitionItem, SettingDefinitionList } from "obsidian";
+import type ZoteroLibraryPlugin from "./main";
+import { App, Notice, PluginSettingTab, SettingDefinitionItem, SettingDefinitionList } from "obsidian";
 import { DEFAULT_SETTINGS } from "./constants";
-import type { MyPluginSettings } from "./types";
+import type { ZoteroLibrarySettings } from "./types";
 
 const TRANSFORMATION_KEYS = [
     "keyH1", "keyH2", "keyH3", "keyH4", "keyH5", "keyH6",
@@ -9,9 +9,9 @@ const TRANSFORMATION_KEYS = [
 ] as const;
 
 export class SettingTab extends PluginSettingTab {
-    plugin: MyPlugin;
+    plugin: ZoteroLibraryPlugin;
 
-    constructor(app: App, plugin: MyPlugin) {
+    constructor(app: App, plugin: ZoteroLibraryPlugin) {
         super(app, plugin);
         this.plugin = plugin;
     }
@@ -21,7 +21,7 @@ export class SettingTab extends PluginSettingTab {
         await super.setControlValue(key, value);
         if (key === "bibPath") {
             await this.plugin.refreshDiscoveredLibraryFields(true);
-            this.plugin.refreshLibraryViews();
+            await this.plugin.refreshLibraryViews();
         }
     }
 
@@ -31,7 +31,7 @@ export class SettingTab extends PluginSettingTab {
         }
     }
 
-    getSettingDefinitions(): SettingDefinitionItem<keyof MyPluginSettings>[] {
+    getSettingDefinitions(): SettingDefinitionItem<keyof ZoteroLibrarySettings>[] {
         return [
             {
                 type: "group",
@@ -686,11 +686,11 @@ export class SettingTab extends PluginSettingTab {
     private async saveColumns(columns: string[], rebuild = true): Promise<void> {
         this.plugin.settings.libraryViewColumns = this.plugin.parseLibraryViewColumns(columns.join(","));
         await this.plugin.saveSettings();
-        this.plugin.refreshLibraryViews();
+        await this.plugin.refreshLibraryViews();
         if (rebuild) this.update();
     }
 
-    private libraryColumnsDefinition(): SettingDefinitionList<keyof MyPluginSettings> {
+    private libraryColumnsDefinition(): SettingDefinitionList<keyof ZoteroLibrarySettings> {
         const plugin = this.plugin;
         return {
             type: "list",
@@ -714,19 +714,19 @@ export class SettingTab extends PluginSettingTab {
                     setting.addText(text => text
                         .setPlaceholder("Title")
                         .setValue(parts[0])
-                        .onChange(value => { void savePart(0, value, false); }));
+                        .onChange(value => { void savePart(0, value, false).catch((error: unknown) => new Notice(error instanceof Error ? error.message : "Failed to save settings")); }));
                     setting.addDropdown(dropdown => {
                         const populate = () => {
                             const selected = dropdown.getValue() || field;
                             dropdown.selectEl.empty();
                             const fields = new Set([...plugin.getAvailableLibrarySourceFields(), selected]);
-                            fields.forEach(value => dropdown.addOption(value, value));
+                            fields.forEach(value => { dropdown.addOption(value, value); });
                             dropdown.setValue(selected);
                         };
                         populate();
                         // Refresh choices after a JSON path change without rebuilding the focused input.
                         dropdown.selectEl.addEventListener("focus", populate);
-                        dropdown.setValue(field).onChange(value => { void savePart(1, value, true); });
+                        dropdown.setValue(field).onChange(value => { void savePart(1, value, true).catch((error: unknown) => new Notice(error instanceof Error ? error.message : "Failed to save settings")); });
                     });
                     setting.addDropdown(dropdown => {
                         const populate = () => {
@@ -739,30 +739,30 @@ export class SettingTab extends PluginSettingTab {
                         };
                         populate();
                         dropdown.selectEl.addEventListener("focus", populate);
-                        dropdown.setValue(parts[2] || "").onChange(value => { void savePart(2, value, false); });
+                        dropdown.setValue(parts[2] || "").onChange(value => { void savePart(2, value, false).catch((error: unknown) => new Notice(error instanceof Error ? error.message : "Failed to save settings")); });
                     });
                 },
             })),
             addItem: {
                 name: "Add column",
-                action: () => { void this.saveColumns([...plugin.getLibraryViewColumns(), "New Column"]); },
+                action: () => { void this.saveColumns([...plugin.getLibraryViewColumns(), "New Column"]).catch((error: unknown) => new Notice(error instanceof Error ? error.message : "Failed to save settings")); },
             },
             onDelete: index => {
                 const columns = plugin.getLibraryViewColumns().slice();
                 if (columns.length <= 1) return;
                 columns.splice(index, 1);
-                void this.saveColumns(columns);
+                void this.saveColumns(columns).catch((error: unknown) => new Notice(error instanceof Error ? error.message : "Failed to save settings"));
             },
             onReorder: (from, to) => {
                 const columns = plugin.getLibraryViewColumns().slice();
                 const [column] = columns.splice(from, 1);
                 columns.splice(to, 0, column);
-                void this.saveColumns(columns);
+                void this.saveColumns(columns).catch((error: unknown) => new Notice(error instanceof Error ? error.message : "Failed to save settings"));
             },
             extraButtons: [button => button
                 .setIcon("reset")
                 .setTooltip("Reset default columns")
-                .onClick(() => { void this.saveColumns(DEFAULT_SETTINGS.libraryViewColumns.slice()); })],
+                .onClick(() => { void this.saveColumns(DEFAULT_SETTINGS.libraryViewColumns.slice()).catch((error: unknown) => new Notice(error instanceof Error ? error.message : "Failed to save settings")); })],
         };
     }
 }

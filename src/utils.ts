@@ -1,4 +1,4 @@
-import { normalizePath } from "obsidian";
+import { App, TFile, normalizePath } from "obsidian";
 //import { App, normalizePath } from "obsidian";
 import {
 	//Reference,
@@ -6,7 +6,6 @@ import {
 	CreatorArray,
 	Reference,
 } from "./types";
-import path from "path";
 
 import { TEMPLATE_BRACKET_REG, TEMPLATE_REG } from "./constants";
 
@@ -59,47 +58,47 @@ export const createAuthorKey = (creators: CreatorArray) => {
 		const creator: Creator = creators[creatorindex]; //select the author
 
 		if (creator.creatorType === "author") {
-			if (creator.hasOwnProperty("name")) {
+			if (Object.prototype.hasOwnProperty.call(creator, "name")) {
 				//authorList.push(creator.name)
 				authorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//authorList.push(creator.lastName + ", " + creator.firstName)
 				authorKey.push(creator.lastName);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				!Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//authorList.push(creator.lastName)
 				authorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//authorList.push(creator.firstName)
 				authorKey.push(creator.firstName);
 			}
 		} else if (creator.creatorType === "editor") {
-			if (creator.hasOwnProperty("name")) {
+			if (Object.prototype.hasOwnProperty.call(creator, "name")) {
 				//editorList.push(creator.name)
 				editorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//editorList.push(creator.lastName + ", " + creator.firstName)
 				editorKey.push(creator.lastName);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				!Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//editorList.push(creator.lastName)
 				editorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//editorList.push(creator.firstName)
 				editorKey.push(creator.firstName);
@@ -158,49 +157,49 @@ export const createAuthorKeyFullName = (creators: CreatorArray) => {
 
 		const creator: Creator = creators[creatorindex]; //select the author
 		if (creator.creatorType === "author") {
-			if (creator.hasOwnProperty("name")) {
+			if (Object.prototype.hasOwnProperty.call(creator, "name")) {
 				//authorList.push(creator.name)
 				authorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				authorKey.push(creator.lastName + ", " + creator.firstName);
 				authorKeyReverse.push(creator.firstName + " " + creator.lastName);
 
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				!Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//authorList.push(creator.lastName)
 				authorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//authorList.push(creator.firstName)
 				authorKey.push(creator.firstName);
 			}
 		} else if (creator.creatorType === "editor") {
-			if (creator.hasOwnProperty("name")) {
+			if (Object.prototype.hasOwnProperty.call(creator, "name")) {
 				//editorList.push(creator.name)
 				editorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				editorKey.push(creator.lastName + ", " + creator.firstName);
 				editorKeyReverse.push(creator.firstName + " " + creator.lastName);
 
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				!Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//editorList.push(creator.lastName)
 				editorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//editorList.push(creator.firstName)
 				editorKey.push(creator.firstName);
@@ -257,46 +256,46 @@ export const createAuthorKeyInitials = (creators: CreatorArray) => {
 
 		const creator: Creator = creators[creatorindex]; //select the author
 		if (creator.creatorType === "author") {
-			if (creator.hasOwnProperty("name")) {
+			if (Object.prototype.hasOwnProperty.call(creator, "name")) {
 				//authorList.push(creator.name)
 				authorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				authorKey.push(creator.lastName + ", " + creator.firstName.substring(0, 1) + ".");
 
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				!Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//authorList.push(creator.lastName)
 				authorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//authorList.push(creator.firstName)
 				authorKey.push(creator.firstName);
 			}
 		} else if (creator.creatorType === "editor") {
-			if (creator.hasOwnProperty("name")) {
+			if (Object.prototype.hasOwnProperty.call(creator, "name")) {
 				//editorList.push(creator.name)
 				editorKey.push(creator.name);
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				editorKey.push(creator.lastName + ", " + creator.firstName.substring(0, 1) + ".");
 			} else if (
-				creator.hasOwnProperty("lastName") &&
-				!creator.hasOwnProperty("firstName")
+				Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				!Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//editorList.push(creator.lastName)
 				editorKey.push(creator.lastName);
 			} else if (
-				!creator.hasOwnProperty("lastName") &&
-				creator.hasOwnProperty("firstName")
+				!Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+				Object.prototype.hasOwnProperty.call(creator, "firstName")
 			) {
 				//editorList.push(creator.firstName)
 				editorKey.push(creator.firstName);
@@ -366,19 +365,19 @@ export function orderByDateModified(a: Reference, b: Reference) {
 
 export function formatCreatorsName(creator: Creator, nameCustom: string) {
 	// when the creator only has a name (no first or last name) this works just fine
-	if (creator.hasOwnProperty("name")) {
+	if (Object.prototype.hasOwnProperty.call(creator, "name")) {
 		nameCustom = creator.name;
 		nameCustom = nameCustom.trim();
 		return nameCustom;
 	} else if (
-		creator.hasOwnProperty("lastName") &&
-		creator.hasOwnProperty("firstName")
+		Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+		Object.prototype.hasOwnProperty.call(creator, "firstName")
 	) {
 		nameCustom = nameCustom.replace("{{lastName}}", creator.lastName);
 		nameCustom = nameCustom.replace("{{firstName}}", creator.firstName);
 		const getInitials = function (string: string) {
-			let names = string.split(' '),
-				initials = names[0].substring(0, 1).toUpperCase() + ".";
+			const names = string.split(' ');
+			let initials = names[0].substring(0, 1).toUpperCase() + ".";
 
 			if (names.length > 1) {
 				initials += names[names.length - 1].substring(0, 1).toUpperCase() + ".";
@@ -390,8 +389,8 @@ export function formatCreatorsName(creator: Creator, nameCustom: string) {
 		nameCustom = nameCustom.trim();
 		return nameCustom;
 	} else if (
-		creator.hasOwnProperty("lastName") &&
-		!creator.hasOwnProperty("firstName")
+		Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+		!Object.prototype.hasOwnProperty.call(creator, "firstName")
 	) {
 		nameCustom = nameCustom.replace("{{lastName}}", creator.lastName);
 		nameCustom = nameCustom.replace("; {{firstName}}", creator.firstName);
@@ -400,8 +399,8 @@ export function formatCreatorsName(creator: Creator, nameCustom: string) {
 		nameCustom = nameCustom.trim();
 		return nameCustom;
 	} else if (
-		!creator.hasOwnProperty("lastName") &&
-		creator.hasOwnProperty("firstName")
+		!Object.prototype.hasOwnProperty.call(creator, "lastName") &&
+		Object.prototype.hasOwnProperty.call(creator, "firstName")
 	) {
 		nameCustom = nameCustom.replace("; {{lastName}}", creator.firstName);
 		nameCustom = nameCustom.replace(", {{lastName}}", creator.firstName);
@@ -597,7 +596,7 @@ function attachmentLinks(reference: Reference, usePathLabel: boolean): string {
 		const target = localFileURL(attachment.path);
 		if (!target) continue;
 		const label = (usePathLabel ? attachment.path : attachment.title || attachment.path.split(/[\\/]/).pop() || "Attachment")
-			.replace(/\\/g, "\\\\").replace(/([\[\]])/g, "\\$1").replace(/[\r\n]+/g, " ");
+			.replace(/\\/g, "\\\\").replace(/([[\]])/g, "\\$1").replace(/[\r\n]+/g, " ");
 		links.push(`[${label}](${target})`);
 	}
 	return links.join("; ");
@@ -615,7 +614,7 @@ export function createLocalFilePathLink(reference: Reference) {
 export function createAttachmentSelectLink(reference: Reference) {
 	return (reference.attachments || [])
 		.filter(a => (!a.itemType || a.itemType === "attachment") && a.select)
-		.map(a => `[${(a.title || "Attachment").replace(/([\[\]])/g, "\\$1")}](${encodeURI(a.select)})`)
+		.map(a => `[${(a.title || "Attachment").replace(/([[\]])/g, "\\$1")}](${encodeURI(a.select)})`)
 		.join("; ") || "{{filePath}}";
 }
 
@@ -690,14 +689,7 @@ export function createNoteTitle(
 	//Remove special characters from the name of the file
 	exportTitle = exportTitle.replace(/[/\\?%*:|"<>]/g, "");
 
-	//Get the path of the vault
-	const vaultPath = this.app.vault.adapter.getBasePath();
-
-	const exportPathFull = path.normalize(
-		vaultPath + "/" + exportPath + "/" + exportTitle + ".md"
-	);
-
-	return exportPathFull;
+	return vaultRelativePath(`${exportPath}/${exportTitle}.md`);
 }
 
 export function replaceTagList(
@@ -850,44 +842,29 @@ export function replaceTagList(
 	return metadata;
 }
 
-export function openSelectedNote(
-	selectedEntry: Reference,
-	exportTitle: string,
-	exportPath: string
-) {
-	const noteTitleFull = createNoteTitle(
-		selectedEntry,
-		exportTitle,
-		exportPath
-		//this.zoteroBuildWindows
-	);
-
-	//remove from the path of the note to be exported the path of the vault
-	const noteTitleShort = noteTitleFull.replace(
-		normalizePath(this.app.vault.adapter.getBasePath()) + "/",
-		""
-	);
-
-	//Find the TFile
-	const myFile = this.app.vault.getAbstractFileByPath(noteTitleShort);
-
-	//Open the Note ina new leaf
-	this.app.workspace.getUnpinnedLeaf().openFile(myFile);
+export async function openSelectedNote(app: App, selectedEntry: Reference, exportTitle: string, exportPath: string) {
+ const file = app.vault.getAbstractFileByPath(createNoteTitle(selectedEntry, exportTitle, exportPath));
+ if (file instanceof TFile) await app.workspace.getLeaf(false).openFile(file);
 }
 
-export function parseCiteKeyFromNoteName(noteName:string, format:string) {
-	// find {{citeKey}} in note title format
-	const match = format.match("{{citeKey}}");
-	if (match != null) {
-		// search value of citekey in noteName using patterns around {{citekey}} in format string
-		// if format = '@{{citekey}}.md'
-		// then regExp = '@(s*[a-zA-Z0-9]+s*).md'
-		// works if format = '{{citekey}}.md' or '@{{citekey}}-{{title}}.md'
-		// formats like '@{{citekey}}{{title}}' won't work
-		const regExp = format.substring(
-			match.index != 0 ? match.index - 1 : match.index, 
-			match.index + match[0].length + 1)
-			.replace("{{citeKey}}", "(s*[a-zA-Z0-9]+s*)");
-		return noteName.match(regExp)[1];
-	}
+export function parseCiteKeyFromNoteName(noteName: string, format: string): string | null {
+ const token = /\{\{(?:citekey|citationkey)\}\}/i.exec(format);
+ if (!token) return null;
+ const surroundingPattern = (part: string) => part.split(/\{\{[^}]+\}\}/).map(escapeRegExp).join(".*?");
+ const before = surroundingPattern(format.slice(0, token.index));
+ const after = surroundingPattern(format.slice(token.index + token[0].length));
+ return new RegExp(`^${before}(.+?)${after}$`).exec(noteName)?.[1] ?? null;
+}
+
+// Reject paths that could escape the vault when read by an adapter.
+export function vaultRelativePath(path: string): string {
+ const relative = path.replace(/\\/g, "/").replace(/^\/+/, "");
+ if (/^[A-Za-z]:/.test(relative) || relative.split("/").includes("..")) throw new Error("Path must stay inside the vault");
+ return normalizePath(relative);
+}
+
+// Preserve the old percent decoder, including %uXXXX and malformed escapes.
+export function decodeLegacyEscapes(value: string): string {
+ return value.replace(/%u([0-9a-f]{4})|%([0-9a-f]{2})/gi, (_match: string, unicode: string | undefined, byte: string | undefined) =>
+  String.fromCharCode(parseInt(unicode ?? byte ?? "0", 16)));
 }

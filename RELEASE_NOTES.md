@@ -1,0 +1,8 @@
+- Read libraries and create or update notes through Obsidian's vault APIs, including on mobile.
+- Keep library panel placement when the plugin unloads.
+- Remove regex lookbehind and the deprecated percent decoder for older iOS compatibility.
+- Validate imported library data, safely handle dynamic fields, and handle asynchronous failures.
+- Wait for note and image writes before reporting successful imports.
+- Limit external Zotero image copying to desktop, with no Node modules loaded on mobile.
+- Remove unused dependencies and local-storage logging; update and audit build dependencies.
+- Add typed lint checks, regression coverage, reproducible builds, and release asset attestations.

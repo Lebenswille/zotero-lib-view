@@ -1,4 +1,4 @@
-import { MyPluginSettings } from "./types";
+import { ZoteroLibrarySettings } from "./types";
 
 export const templatePlain = "# {{title}}\n" +
 	"\n" +
@@ -110,7 +110,7 @@ export const BUILT_IN_LIBRARY_COLUMNS = ["Obsidian Notes", "Year", "Type", "Titl
 export const DEFAULT_LIBRARY_VIEW_COLUMNS = ["Obsidian Notes", "Year", "Title", "Publication", "Tags", "Added", "Action|Actions"];
 export const EXCLUDED_DYNAMIC_LIBRARY_FIELDS = new Set(["citationKey", "date", "itemType", "title", "creators", "publicationTitle", "tags", "dateAdded", "url", "select", "uri"]);
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
+export const DEFAULT_SETTINGS: ZoteroLibrarySettings = {
 	bibPath: "",
 	autoImportOnBibChange: false,
 	libraryViewColumns: DEFAULT_LIBRARY_VIEW_COLUMNS.slice(),

@@ -2,9 +2,9 @@ const assert = require('assert/strict');
 const esbuild = require('esbuild');
 const vm = require('vm');
 const result = esbuild.buildSync({entryPoints: ['src/utils.ts'], bundle: true, platform: 'node', format: 'cjs', external: ['obsidian'], write: false});
-const sandbox = {exports: {}, URL, require: name => name === 'obsidian' ? {normalizePath: x => x} : require(name)};
+const sandbox = {exports: {}, module: {exports: {}}, URL, require: name => name === 'obsidian' ? {normalizePath: x => x} : require(name)};
 vm.runInNewContext(result.outputFiles[0].text, sandbox);
-const {attachmentTemplateFields, replaceAllTemplates, replaceMissingFields} = sandbox.exports;
+const {attachmentTemplateFields, replaceAllTemplates, replaceMissingFields} = sandbox.module.exports;
 const reference = {file: 'original $& export', attachments: [
   {path: '/Users/me/论文 #1 (draft)?.pdf', title: 'Paper [PDF] $&', itemType: 'attachment', select: 'zotero://select/library/items/ABC'},
   {path: 'C:\\Papers\\a b.pdf', title: 'Windows'},
@@ -37,7 +37,7 @@ console.log('Attachment template regression checks passed.');
 
 // Parse the rendered property using a YAML parser, not just string comparisons.
 const yaml = require('js-yaml');
-const {createZoteroReaderPathLinkYamlList} = sandbox.exports;
+const {createZoteroReaderPathLinkYamlList} = sandbox.module.exports;
 const readerReference = {attachments: [
   {itemType: 'attachment', title: 'A "quoted" title \\ [PDF]\nnext line', select: 'zotero://select/library/items/ABCD1234'},
   {itemType: 'attachment', title: 'Snapshot', select: 'zotero://select/groups/12345/items/EFGH5678', contentType: 'text/html'},

@@ -1,6 +1,7 @@
+import type { TFile } from "obsidian";
 
 
-export interface MyPluginSettings {
+export interface ZoteroLibrarySettings {
 	bibPath: string;
 	autoImportOnBibChange: boolean;
 	libraryViewColumns: string[];
@@ -92,6 +93,8 @@ export interface MyPluginSettings {
 }
 
 export interface Reference {
+	[key: string]: unknown;
+	url: string;
 	authorKey: string;
 	authorKeyInitials: string;
 	authorKeyFullName: string;
@@ -110,18 +113,13 @@ export interface Reference {
 	dateModified: string;
 	dateAdded: string; // added
 	itemKey: string;
-	itemID: number;
+	itemID: string | number;
 	title: string;
 	publicationTitle: string;
-	volume: number;
-	issue: number;
+	volume: string | number;
+	issue: string | number;
 	pages: string;
-	creators: {
-		creatorType: string;
-		firstName: string;
-		lastName: string;
-		name: string;
-	}[];
+	creators: Creator[];
 	file: string;
 	filePath: string;
 	zoteroReaderLink: string;
@@ -179,14 +177,16 @@ export interface LibraryEntry {
 	rawEntry: Reference;
 	rawData: BibData;
 	notePathShort: string;
-	noteFile: any; // Use TFile from obsidian if imported
+	noteFile: TFile | null;
 	customFieldValues: Record<string, string>;
 	searchText: string;
 }
 
 export interface BibData {
 	items: Reference[];
-	collections?: Collection[];
+	collections: Record<string, Collection>;
+	config?: Record<string, unknown>;
+	version?: string;
 }
 
 export interface AnnotationElements {
@@ -221,13 +221,12 @@ export interface AnnotationElements {
 	zoteroBackLink: string;
 	annotationKey: string;
 }
-[];
 
 export interface Creator {
 	creatorType: string;
-	firstName: string;
-	lastName: string;
-	name: string;
+	firstName?: string;
+	lastName?: string;
+	name?: string;
 }
 
 export interface Collection {

@@ -1,14 +1,8 @@
-// Import fs
-import * as fs from "fs";
-import { Debugout } from "debugout.js";
+import { DebugLog } from "./debug-log";
+import { parseBibData, isRecord, createAnnotationElements } from "./bib-data";
+import { copyExternalImage } from "./desktop-files";
 import ColorClassifier, { Palette, AlgorithmTypes } from "color-classifier"
-//import Database from "better-sqlite3";
-//import DB from "better-sqlite3";
-
-//import { info, setLevel } from "loglevel";
-
-import { Plugin, Notice, normalizePath, ItemView, Menu, TextComponent, MarkdownView, setIcon, TFile, WorkspaceLeaf } from "obsidian";
-import path from "path";
+import { Plugin, Notice, normalizePath, ItemView, MarkdownView, setIcon, TFile, TAbstractFile, WorkspaceLeaf } from "obsidian";
 import TurndownService from 'turndown';
 import {
 	DEFAULT_SETTINGS,
@@ -21,15 +15,16 @@ import {
 } from "./constants";
 
 //Import modals from /modal.ts
-import { fuzzySelectEntryFromJson, updateLibrary } from "./modal";
+import { ReferenceSuggestModal, UpdateLibraryModal } from "./modal";
 
-//Import sample settings from /settings.ts
+//Import settings from /settings.ts
 import { SettingTab } from "./settings";
 import {
 	AnnotationElements,
-	MyPluginSettings,
+	ZoteroLibrarySettings,
 	Reference,
 	Collection,
+	Creator,
 	LibraryEntry,
 	BibData,
 } from "./types";
@@ -52,8 +47,9 @@ import {
 	createAuthorKeyInitials,
 	createAuthorKeyFullName,
 	parseCiteKeyFromNoteName,
+	vaultRelativePath,
+	decodeLegacyEscapes,
 } from "./utils";
-import { createImportSpecifier } from "typescript";
 
 const BUILT_IN_LIBRARY_FIELD_MAP: Record<string, string> = {
 	"Obsidian Notes": "Obsidian Notes",
@@ -83,11 +79,11 @@ const LEGACY_LIBRARY_COLUMN_MAP: Record<string, string> = {
 };
 
 class ZoteroLibraryView extends ItemView {
-	plugin: MyPlugin;
+	plugin: ZoteroLibraryPlugin;
 	sortColumn: string;
 	sortDirection: "asc" | "desc";
 
-	constructor(leaf: WorkspaceLeaf, plugin: MyPlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: ZoteroLibraryPlugin) {
 		super(leaf);
 		this.plugin = plugin;
 		this.sortColumn = this.plugin.normalizeLibraryColumn(this.plugin.settings.libraryViewSortColumn || "Added");
@@ -117,7 +113,7 @@ class ZoteroLibraryView extends ItemView {
 		container.empty();
 		container.addClass("zotero-lib-view");
 
-		const data: any = await this.plugin.loadBibData(true);
+		const data = await this.plugin.loadBibData(true);
 		if (data == null) {
 			container.createEl("p", { text: "No BetterBibTex JSON file found. Please check the Zotero Lib View settings." });
 			return;
@@ -198,7 +194,7 @@ class ZoteroLibraryView extends ItemView {
 				}
 				this.plugin.settings.libraryViewSortColumn = this.sortColumn;
 				this.plugin.settings.libraryViewSortDirection = this.sortDirection;
-				void this.plugin.saveSettings();
+				this.plugin.runTask(this.plugin.saveSettings());
 				updateSortIndicators();
 				renderRows(searchInput.value);
 			};
@@ -216,8 +212,8 @@ class ZoteroLibraryView extends ItemView {
 		const openEntryPdf = (entry: LibraryEntry) => {
 			const pdfFile = (entry.pdfName && this.plugin.app.metadataCache.getFirstLinkpathDest(entry.pdfName, "")) ||
 				this.plugin.app.metadataCache.getFirstLinkpathDest(entry.citeKey + ".pdf", "");
-			if (pdfFile) {
-				void this.plugin.openFileReusingLeaf(pdfFile as TFile);
+			if (pdfFile instanceof TFile) {
+				this.plugin.runTask(this.plugin.openFileReusingLeaf(pdfFile));
 			} else if (entry.pdfLink !== "") {
 				window.open(entry.pdfLink, "_blank");
 			}
@@ -236,8 +232,6 @@ class ZoteroLibraryView extends ItemView {
 				const row = tbody.insertRow();
 				visibleColumns.forEach(columnString => {
 					const normalizedColumn = this.plugin.normalizeLibraryColumn(columnString);
-					const parts = normalizedColumn.split("|");
-					const label = parts[0];
 					const field = this.plugin.resolveLibraryColumnField(normalizedColumn);
 					const noteTitle = entry.noteFile?.basename || entry.notePathShort.split("/").pop()?.replace(/\.md$/i, "") || entry.citeKey;
 
@@ -246,7 +240,7 @@ class ZoteroLibraryView extends ItemView {
 						const noteLink = citeCell.createEl("a", { text: noteTitle, href: "#" });
 						noteLink.addEventListener("click", (event) => {
 							event.preventDefault();
-							this.plugin.openOrCreateLibraryEntryNote(entry);
+							this.plugin.runTask(this.plugin.openOrCreateLibraryEntryNote(entry));
 						});
 						return;
 					}
@@ -305,7 +299,7 @@ class ZoteroLibraryView extends ItemView {
 						// Note Creator Button
 						const noteButton = actionsCell.createEl("button", { text: entry.noteFile != undefined ? "Note" : "Create" });
 						noteButton.addEventListener("click", () => {
-							this.plugin.openOrCreateLibraryEntryNote(entry);
+							this.plugin.runTask(this.plugin.openOrCreateLibraryEntryNote(entry));
 						});
 
 						return;
@@ -326,8 +320,8 @@ class ZoteroLibraryView extends ItemView {
 	}
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class ZoteroLibraryPlugin extends Plugin {
+	settings: ZoteroLibrarySettings;
 	keyWordArray: string[];
 	pathZoteroStorage: string;
 	zoteroBuildWindows: boolean;
@@ -358,7 +352,7 @@ export default class MyPlugin extends Plugin {
 			id: "importSelectedJson-modal",
 			name: "Create/Update Literature Note",
 			callback: () => {
-				new fuzzySelectEntryFromJson(this.app, this).open();
+				new ReferenceSuggestModal(this.app, this).open();
 			},
 		});
 
@@ -367,7 +361,7 @@ export default class MyPlugin extends Plugin {
 			id: "updateLibrary-modal",
 			name: "Update Library",
 			callback: () => {
-				new updateLibrary(this.app, this).open();
+				new UpdateLibraryModal(this.app, this).open();
 			},
 		});
 
@@ -375,28 +369,28 @@ export default class MyPlugin extends Plugin {
 			id: "update-current-note",
 			name: "Update Current Literature Note",
 			callback: () => {
-				this.updateCurrentNote();
+				this.runTask(this.updateCurrentNote());
 			},
 		});
 
 		this.addCommand({
 			id: "open-library-view",
-			name: "Open Zotero Lib View in Sidebar",
-			callback: async () => {
-				await this.activateLibraryViewInSidebar();
+			name: "Open Library in Sidebar",
+			callback: () => {
+				this.runTask(this.activateLibraryViewInSidebar());
 			},
 		});
 
 		this.addCommand({
 			id: "open-library-view-tab",
-			name: "Open Zotero Lib View in Tab",
-			callback: async () => {
-				await this.activateLibraryViewInTab();
+			name: "Open Library in Tab",
+			callback: () => {
+				this.runTask(this.activateLibraryViewInTab());
 			},
 		});
 
-		this.addRibbonIcon("library", "Open Zotero Lib View", async () => {
-			await this.activateLibraryViewInTab();
+		this.addRibbonIcon("library", "Open Library", () => {
+			this.runTask(this.activateLibraryViewInTab());
 		});
 
 		this.registerObsidianProtocolHandler("zotero-library", async (params) => {
@@ -434,15 +428,29 @@ export default class MyPlugin extends Plugin {
 			this.libraryViewRefreshDebounce = undefined;
 		}
 		this.removeHeaderLibraryButtons();
-		this.app.workspace.detachLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE);
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData()
-		);
+		const saved: unknown = await this.loadData();
+		this.settings = {...DEFAULT_SETTINGS, libraryViewColumns: [...DEFAULT_SETTINGS.libraryViewColumns]};
+		if (isRecord(saved)) {
+			for (const key of Object.keys(DEFAULT_SETTINGS)) {
+				const defaultValue: unknown = DEFAULT_SETTINGS[key as keyof ZoteroLibrarySettings];
+				const value = saved[key];
+				if (key === "lastUpdateDate" && typeof value === "string") {
+					const date = new Date(value);
+					if (!Number.isNaN(date.getTime())) this.settings.lastUpdateDate = date;
+				} else if (Array.isArray(defaultValue)) {
+					if (Array.isArray(value) && (value as unknown[]).every(item => typeof item === "string"))
+						Object.defineProperty(this.settings, key, {value: [...value as string[]], writable: true, enumerable: true, configurable: true});
+				} else if (value !== undefined && typeof value === typeof defaultValue) {
+					Object.defineProperty(this.settings, key, {value, writable: true, enumerable: true, configurable: true});
+				}
+			}
+			if (isRecord(saved.fieldPropertyMapping)) {
+				this.settings.fieldPropertyMapping = Object.fromEntries(Object.entries(saved.fieldPropertyMapping).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
+			}
+		}
 		this.discoveredLibraryFields = [];
 		this.discoveredSubFields = {};
 	}
@@ -454,7 +462,7 @@ export default class MyPlugin extends Plugin {
 	removeHeaderLibraryButtons() {
 		const markdownLeaves = this.app.workspace.getLeavesOfType("markdown");
 		markdownLeaves.forEach(leaf => {
-			const actionsEl = (leaf.view as any).actionsEl;
+			const actionsEl = leaf.view.containerEl.querySelector<HTMLElement>(".view-actions");
 			if (!actionsEl) return;
 			actionsEl.querySelectorAll(`#${ZOTERO_LIBRARY_HEADER_BUTTON_ID}`).forEach((element: HTMLElement) => {
 				element.remove();
@@ -471,7 +479,7 @@ export default class MyPlugin extends Plugin {
 		const frontmatter = fileCache?.frontmatter;
 		if (!frontmatter || !Object.prototype.hasOwnProperty.call(frontmatter, "Zotero Library")) return;
 
-		const actionsEl = (activeView as any).actionsEl;
+		const actionsEl = activeView.containerEl.querySelector<HTMLElement>(".view-actions");
 		if (!actionsEl) return;
 
 		const buttonContainer = actionsEl.createDiv();
@@ -480,8 +488,8 @@ export default class MyPlugin extends Plugin {
 		buttonContainer.addClass("view-action");
 		buttonContainer.setAttribute("aria-label", "Open Zotero Lib View");
 		setIcon(buttonContainer, "library");
-		buttonContainer.addEventListener("click", async () => {
-			await this.activateLibraryViewInTab();
+		buttonContainer.addEventListener("click", () => {
+			this.runTask(this.activateLibraryViewInTab());
 		});
 		if (actionsEl.firstChild) {
 			actionsEl.insertBefore(buttonContainer, actionsEl.firstChild);
@@ -494,7 +502,7 @@ export default class MyPlugin extends Plugin {
 		const existingLeaf = this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE)
 			.find(leaf => leaf.getRoot() === this.app.workspace.rightSplit);
 		if (existingLeaf) {
-			this.app.workspace.revealLeaf(existingLeaf);
+			await this.app.workspace.revealLeaf(existingLeaf);
 			return;
 		}
 
@@ -503,14 +511,14 @@ export default class MyPlugin extends Plugin {
 			type: ZOTERO_LIBRARY_VIEW_TYPE,
 			active: true,
 		});
-		this.app.workspace.revealLeaf(leaf);
+		await this.app.workspace.revealLeaf(leaf);
 	}
 
 	async activateLibraryViewInTab() {
 		const existingLeaf = this.app.workspace.getLeavesOfType(ZOTERO_LIBRARY_VIEW_TYPE)
 			.find(leaf => leaf.getRoot() !== this.app.workspace.rightSplit && leaf.getRoot() !== this.app.workspace.leftSplit);
 		if (existingLeaf) {
-			this.app.workspace.revealLeaf(existingLeaf);
+			await this.app.workspace.revealLeaf(existingLeaf);
 			return;
 		}
 
@@ -519,7 +527,7 @@ export default class MyPlugin extends Plugin {
 			type: ZOTERO_LIBRARY_VIEW_TYPE,
 			active: true,
 		});
-		this.app.workspace.revealLeaf(leaf);
+		await this.app.workspace.revealLeaf(leaf);
 	}
 
 	findOpenLeafForFile(file: TFile): WorkspaceLeaf | null {
@@ -544,7 +552,7 @@ export default class MyPlugin extends Plugin {
 		const existingLeaf = this.findOpenLeafForFile(file);
 		if (existingLeaf) {
 			await this.app.workspace.revealLeaf(existingLeaf);
-			this.app.workspace.setActiveLeaf(existingLeaf, true, true);
+			this.app.workspace.setActiveLeaf(existingLeaf, { focus: true });
 			return;
 		}
 
@@ -552,7 +560,6 @@ export default class MyPlugin extends Plugin {
 	}
 
 	async openOrCreateLibraryEntryNote(entry: LibraryEntry) {
-		const { app } = this;
 		if (entry.noteFile) {
 			await this.openFileReusingLeaf(entry.noteFile);
 		} else {
@@ -621,8 +628,8 @@ export default class MyPlugin extends Plugin {
 		const directionFactor = direction === "desc" ? -1 : 1;
 		const getLibraryEntryNoteTitle = (entry: LibraryEntry) => entry.noteFile?.basename || entry.notePathShort.split("/").pop()?.replace(/\.md$/i, "") || entry.citeKey;
 
-		let firstValue: any = "";
-		let secondValue: any = "";
+		let firstValue = "";
+		let secondValue = "";
 
 		if (field === "Obsidian Notes") {
 			firstValue = getLibraryEntryNoteTitle(firstEntry);
@@ -675,7 +682,7 @@ export default class MyPlugin extends Plugin {
 	}
 
 	registerBibFileWatcher() {
-		const scheduleImport = (file: any) => {
+		const scheduleImport = (file: TAbstractFile) => {
 			const bibPath = normalizePath(this.settings.bibPath || "");
 			if (bibPath === "" || file.path !== bibPath) return;
 
@@ -686,7 +693,7 @@ export default class MyPlugin extends Plugin {
 			}
 		};
 
-		const scheduleRefreshForReferenceNote = (file: any) => {
+		const scheduleRefreshForReferenceNote = (file: TAbstractFile) => {
 			const exportPath = normalizePath(this.settings.exportPath || "");
 			if (exportPath === "") return;
 
@@ -720,7 +727,7 @@ export default class MyPlugin extends Plugin {
 		}
 		this.autoImportDebounce = window.setTimeout(() => {
 			this.autoImportDebounce = undefined;
-			this.runAutoImport();
+			this.runTask(this.runAutoImport());
 		}, 1500);
 	}
 
@@ -730,7 +737,7 @@ export default class MyPlugin extends Plugin {
 		}
 		this.libraryViewRefreshDebounce = window.setTimeout(() => {
 			this.libraryViewRefreshDebounce = undefined;
-			this.refreshLibraryViews();
+			this.runTask(this.refreshLibraryViews());
 		}, 1500);
 	}
 
@@ -739,15 +746,14 @@ export default class MyPlugin extends Plugin {
 		this.isAutoImportRunning = true;
 
 		try {
-			const data: any = await this.loadBibData();
+			const data = await this.loadBibData();
 			if (data == null) return;
 
 			const updatedEntries = await this.updateLibraryEntries(data);
 			if (updatedEntries.length > 0) {
 				new Notice(`Zotero Lib View auto-imported ${updatedEntries.length} updated reference(s)`);
 			}
-		} catch (error) {
-			console.log(error);
+		} catch {
 			new Notice("Zotero Lib View auto-import failed");
 		} finally {
 			this.isAutoImportRunning = false;
@@ -755,24 +761,24 @@ export default class MyPlugin extends Plugin {
 	}
 
 	async loadBibData(silent = false) {
-		const bibPath = normalizePath(this.settings.bibPath);
 		try {
+			const bibPath = vaultRelativePath(this.settings.bibPath);
 			const exists = await this.app.vault.adapter.exists(bibPath);
 			if (!exists) {
 				if (!silent) new Notice("No BetterBibTex Json file found at " + bibPath);
 				this.discoveredLibraryFields = [];
+				this.discoveredSubFields = {};
 				return undefined;
 			}
 
 			const rawdata = await this.app.vault.adapter.read(bibPath);
-			const data = JSON.parse(rawdata);
+			const data = parseBibData(rawdata);
 
 			this.discoveredLibraryFields = discoverLibraryFieldNames(data);
 			this.discoveredSubFields = discoverLibrarySubFields(data);
 
 			return data;
-		} catch (error) {
-			console.log(error);
+		} catch {
 			if (!silent) new Notice("Failed to read BetterBibTex Json file");
 			this.discoveredLibraryFields = [];
 			this.discoveredSubFields = {};
@@ -787,29 +793,29 @@ export default class MyPlugin extends Plugin {
 	resolveLibraryEntryNoteFile(selectedEntry: Reference, notePathShort: string) {
 		// Try direct match
 		const normalizedPath = normalizePath(notePathShort).replace(/^\/+/, "");
-		const directMatch = this.app.vault.getAbstractFileByPath(normalizedPath) || (this.app.vault as any).getFileByPath(normalizedPath);
-		if (directMatch != null) return directMatch;
+		const directMatch = this.app.vault.getAbstractFileByPath(normalizedPath);
+		if (directMatch instanceof TFile) return directMatch;
 
 		return null;
 	}
 
-	buildLibraryEntries(data: any): LibraryEntry[] {
+	buildLibraryEntries(data: BibData): LibraryEntry[] {
 		const divider = normalizeDivider(this.settings.multipleFieldsDivider);
 		const entries: LibraryEntry[] = [];
 
 		for (let index = 0; index < data.items.length; index++) {
 			const selectedEntry = data.items[index];
-			if (selectedEntry.hasOwnProperty("citationKey") == false) continue;
+			if (Object.prototype.hasOwnProperty.call(selectedEntry, "citationKey") == false) continue;
 
 			selectedEntry.authorKey = createAuthorKey(selectedEntry.creators);
 			selectedEntry.authorKeyInitials = createAuthorKeyInitials(selectedEntry.creators);
 			selectedEntry.authorKeyFullName = createAuthorKeyFullName(selectedEntry.creators);
 
-			if (selectedEntry.hasOwnProperty("date")) {
-				selectedEntry.year = selectedEntry.date.match(/\d\d\d\d/gm) + "";
+			if (Object.prototype.hasOwnProperty.call(selectedEntry, "date")) {
+				selectedEntry.year = (selectedEntry.date.match(/\d{4}/g) || []).join(",");
 			}
 
-			const notePathShort = normalizePath(createNotePathShort(selectedEntry, this.settings.exportTitle, this.settings.exportPath)).replace(/^\/+/, "");
+			const notePathShort = createNoteTitle(selectedEntry, this.settings.exportTitle, this.settings.exportPath).replace(/^\/+/, "");
 			const noteFile = this.resolveLibraryEntryNoteFile(selectedEntry, notePathShort);
 
 			const tagsArray = getTagsForLibraryEntry(selectedEntry);
@@ -841,6 +847,7 @@ export default class MyPlugin extends Plugin {
 				customFieldValues[field] = formatLibraryFieldValue(selectedEntry[field], divider, mappingProperty);
 			});
 
+			const pdfAttachment = selectedEntry.attachments.find(a => a.contentType === "application/pdf" || a.path.toLowerCase().endsWith(".pdf"));
 			entries.push({
 				citeKey: selectedEntry.citationKey,
 				year,
@@ -856,8 +863,8 @@ export default class MyPlugin extends Plugin {
 				dateAddedShort: selectedEntry.dateAdded ? String(selectedEntry.dateAdded).slice(0, 10) : "",
 				url: selectedEntry.url || "",
 				zoteroLink: selectedEntry.select || selectedEntry.uri || "",
-				pdfLink: (((selectedEntry.attachments || []).find((a: any) => (a.contentType === "application/pdf" || (a.path && a.path.toLowerCase().endsWith(".pdf"))) && a.select) || {}).select || "").replace("select", "open-pdf"),
-				pdfName: (((selectedEntry.attachments || []).find((a: any) => (a.contentType === "application/pdf" || (a.path && a.path.toLowerCase().endsWith(".pdf")))) || {}).path || "").split("/").pop().split("\\").pop(),
+				pdfLink: (pdfAttachment?.select || "").replace("select", "open-pdf"),
+				pdfName: (pdfAttachment?.path || "").split(/[\\/]/).pop() || "",
 				rawEntry: selectedEntry,
 				rawData: data,
 				notePathShort,
@@ -872,15 +879,15 @@ export default class MyPlugin extends Plugin {
 		return entries;
 	}
 
-	async updateLibraryEntries(data: any) {
+	async updateLibraryEntries(data: BibData) {
 		const bibtexArray: string[] = [];
 		const lastUpdate = new Date(this.settings.lastUpdateDate);
 
 		for (let index = 0; index < data.items.length; index++) {
 			const selectedEntry = data.items[index];
-			if (selectedEntry.hasOwnProperty("citationKey") == false) continue;
+			if (Object.prototype.hasOwnProperty.call(selectedEntry, "citationKey") == false) continue;
 
-			const noteDateModifiedArray: any[] = [];
+			const noteDateModifiedArray: string[] = [];
 			noteDateModifiedArray.push(selectedEntry.dateModified);
 
 			if (selectedEntry.notes) {
@@ -899,17 +906,17 @@ export default class MyPlugin extends Plugin {
 
 			if (datemodified < lastUpdate) continue;
 
-			if (this.settings.updateLibrary === "Only update existing notes" && !fs.existsSync(createNoteTitle(selectedEntry, this.settings.exportTitle, this.settings.exportPath))) {
+			if (this.settings.updateLibrary === "Only update existing notes" && !(await this.app.vault.adapter.exists(createNoteTitle(selectedEntry, this.settings.exportTitle, this.settings.exportPath)))) {
 				continue;
 			}
 
-			this.createNote(selectedEntry, data);
+			await this.createNote(selectedEntry, data);
 			bibtexArray.push(selectedEntry.citationKey);
 		}
 
 		this.settings.lastUpdateDate = new Date();
 		await this.saveSettings();
-		this.refreshLibraryViews();
+		await this.refreshLibraryViews();
 		return bibtexArray;
 	}
 
@@ -964,7 +971,6 @@ export default class MyPlugin extends Plugin {
 				isHighlightQuote ? "“" : "",
 				isHighlightQuote ? "”" : "",
 			];
-		//console.log(highlightColour)
 		let highlightColouredBefore = ""
 		let highlightColouredAfter = ""
 
@@ -1017,8 +1023,8 @@ export default class MyPlugin extends Plugin {
 		//Create formatting to be added before and after highlights
 		const commentFormatBefore =
 			commentHighlighted +
-			commentColouredBefore
-		commentBold +
+			commentColouredBefore +
+			commentBold +
 			commentItalic +
 			commentQuoteOpen;
 
@@ -1139,11 +1145,11 @@ export default class MyPlugin extends Plugin {
 		);
 
 		//Create field year
-		if (selectedEntry.hasOwnProperty("date")) {
-			selectedEntry.year = selectedEntry.date.match(/\d\d\d\d/gm) + "";
+		if (Object.prototype.hasOwnProperty.call(selectedEntry, "date")) {
+			selectedEntry.year = (selectedEntry.date.match(/\d{4}/g) || []).join(",");
 		}
 		//Create field ZoteroLocalLibrary
-		if (selectedEntry.hasOwnProperty("select")) {
+		if (Object.prototype.hasOwnProperty.call(selectedEntry, "select")) {
 			selectedEntry.localLibrary =
 				"[Zotero](" + selectedEntry.select + ")";
 			selectedEntry.localLibraryLink = selectedEntry.select;
@@ -1266,7 +1272,7 @@ export default class MyPlugin extends Plugin {
 			}
 
 			//Crety empty lineElements
-			const lineElements: AnnotationElements = {
+			const lineElements = createAnnotationElements({
 				highlightText: "",
 				highlightColour: "",
 				annotationType: "",
@@ -1287,11 +1293,11 @@ export default class MyPlugin extends Plugin {
 				attachmentURI: "",
 				zoteroBackLink: "",
 				annotationKey: "",
-			};
+			});
 
 			//Extract the citeKey
 			lineElements.citeKey = String(selectedLine.match(/\(([^)]+)\)+$/g));
-			if (lineElements.citeKey == `null`) { lineElements.citeKey = String(selectedLine.match(/\(([^D+]+) \d+\S+\)/g)) };
+			if (lineElements.citeKey == `null`) { lineElements.citeKey = String(selectedLine.match(/\(([^D+]+) \d+\S+\)/g)) }
 
 			const posCiteKeyBegins = selectedLine.indexOf(lineElements.citeKey);
 
@@ -1491,7 +1497,7 @@ export default class MyPlugin extends Plugin {
 		//Loop through the lines
 		const lengthLines = Object.keys(lines).length;
 		for (let indexLines = 0; indexLines < lengthLines; indexLines++) {
-			const selectedLineOriginal = unescape(lines[indexLines]);
+			const selectedLineOriginal = decodeLegacyEscapes(lines[indexLines]);
 
 
 			// Replace backticks with single quote
@@ -1501,7 +1507,7 @@ export default class MyPlugin extends Plugin {
 			selectedLine = replaceTemplate(selectedLine, "&amp;", "&").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
 
-			const lineElements: AnnotationElements = {
+			const lineElements = createAnnotationElements({
 				highlightText: "",
 				highlightColour: "",
 				annotationType: "",
@@ -1521,7 +1527,7 @@ export default class MyPlugin extends Plugin {
 				attachmentURI: "",
 				zoteroBackLink: "",
 				annotationKey: "",
-			};
+			});
 
 			lineElements.rowEdited = selectedLine;
 
@@ -1552,7 +1558,7 @@ export default class MyPlugin extends Plugin {
 		const lengthLines = Object.keys(lines).length;
 		for (let indexLines = 1; indexLines < lengthLines; indexLines++) {
 
-			const selectedLineOriginal = unescape(lines[indexLines]);
+			const selectedLineOriginal = decodeLegacyEscapes(lines[indexLines]);
 
 			//Remove HTML tags
 			let selectedLine = String(
@@ -1564,7 +1570,7 @@ export default class MyPlugin extends Plugin {
 			// 	// Correct encoding issues
 			selectedLine = replaceTemplate(selectedLine, "&amp;", "&");
 
-			const lineElements: AnnotationElements = {
+			const lineElements = createAnnotationElements({
 				highlightText: "",
 				highlightColour: "",
 				annotationType: "",
@@ -1586,7 +1592,7 @@ export default class MyPlugin extends Plugin {
 				zoteroBackLink: "",
 				attachmentURI: "",
 				annotationKey: "",
-			};
+			});
 
 			//Record the extraction method
 			lineElements.extractionSource = "zotero";
@@ -1711,7 +1717,7 @@ export default class MyPlugin extends Plugin {
 			}
 
 
-			//Create the zotero backlink			
+			//Create the zotero backlink
 			if (/"annotationKey":"[a-zA-Z0-9]+/gm.test(selectedLineOriginal)) {
 				let annotationKey = String(selectedLineOriginal.match(/"annotationKey":"[a-zA-Z0-9]+/gm));
 				if (annotationKey === null) {
@@ -1757,7 +1763,7 @@ export default class MyPlugin extends Plugin {
 			//Extract the text of the annotation
 			if (endCiteKey !== 0) {
 				lineElements.highlightText = selectedLine.substring(0, beginningCiteKey - 1).trim();
-				lineElements.highlightText = lineElements.highlightText.replace(/((?<=\p{Unified_Ideograph})\s*(?=\p{Unified_Ideograph}))/ug, '');
+				lineElements.highlightText = lineElements.highlightText.replace(/(\p{Unified_Ideograph})\s+(?=\p{Unified_Ideograph})/ug, '$1');
 
 				// Remove quotation marks from annotationHighlight
 				["“", '"', "`", "'"].forEach(
@@ -2046,7 +2052,7 @@ export default class MyPlugin extends Plugin {
 				lineElements.colourTextBefore = "";
 			}
 			lineElements.colourTextAfter = String(
-				colourTransformation.match(/(?<={{highlight}}).*$/)
+				colourTransformation.slice(colourTransformation.indexOf("{{highlight}}") + "{{highlight}}".length)
 			);
 			if (lineElements.colourTextAfter == "null") {
 				lineElements.colourTextAfter = "";
@@ -2057,7 +2063,7 @@ export default class MyPlugin extends Plugin {
 		return lineElements;
 	}
 
-	formatNoteElements(noteElements: AnnotationElements[], citeKey: string) {
+	async formatNoteElements(noteElements: AnnotationElements[], citeKey: string) {
 		const { isDoubleSpaced } = this.settings;
 
 		const {
@@ -2295,7 +2301,7 @@ export default class MyPlugin extends Plugin {
 
 
 			// Check if there are any inline tags
-			function allAreEmpty(arr: string[]) { return arr.every(element => element == ""); }
+			const allAreEmpty = (arr: string[]) => arr.every(element => element === "");
 
 			// If there are inline tags, format them. otherwise create empty element
 			if (allAreEmpty(lineElements.inlineTagsArray) == false) {
@@ -2342,68 +2348,15 @@ export default class MyPlugin extends Plugin {
 				let pathImageOld = "";
 				let pathImageNew = "";
 				if (this.settings.imagesImport) {
-					// Check if the user settings has approved the importing of images
-					pathImageOld = path.format({
-						dir: this.pathZoteroStorage + lineElements.imagePath,
-						base: "image.png",
-
-					});
-
-					// If the path of the existing images has been defined in the settings, then take that
-					if (this.settings.zoteroStoragePathManual.length > 0) {
-						pathImageOld = path.format({
-							dir: this.settings.zoteroStoragePathManual + lineElements.imagePath,
-							base: "image.png",
-
-						})
-					}
-
-					pathImageNew = path.normalize(
-						path.format({
-							dir: normalizePath(
-								// create new path with the rootpath + settings.imagesPath
-							(this.app.vault.adapter as any).getBasePath() +
-								"\\" +
-								this.settings.imagesPath
-							),
-							base:
-								citeKey + "_" + lineElements.imagePath + ".png",
-						})
-					);
-					if (this.zoteroBuildWindows == false) {
-						pathImageNew = "/" + pathImageNew;
-					}
-
-
-					//Check if the image exists within Zotero or already within the vault
-					if (
-						// replaced fs.existsSync with the obsidian adapter
-						fs.existsSync(pathImageOld)
-					) {
-						//if the settings is to link to the image in the zotero folder
-						if (this.settings.imagesCopy === false) {
-
-							lineElements.rowEdited = "![](file://" + encodeURI(pathImageOld) + ")" + lineElements.zoteroBackLink;
-						}
-						//if the settings is to copy the image from Zotero to the Obsidian vault
-						else {
-							//if the file has not already been copied
-							if (!fs.existsSync(pathImageNew)) {
-								fs.copyFile(
-									pathImageOld,
-									pathImageNew,
-									(err) => {
-										if (err) throw err;
-									}
-								);
-							}
-							lineElements.rowEdited = "![[" + citeKey + "_" + lineElements.imagePath + ".png]] " +
-								lineElements.citeKey;
-						}
+					const sourceFolder = this.settings.zoteroStoragePathManual || this.pathZoteroStorage;
+					if (!/^[A-Za-z0-9]+$/.test(lineElements.imagePath)) throw new Error("Invalid Zotero image key");
+					pathImageOld = sourceFolder.replace(/[\\/]$/, "") + "/" + lineElements.imagePath + "/image.png";
+					pathImageNew = vaultRelativePath(`${this.settings.imagesPath}/${citeKey}_${lineElements.imagePath}.png`);
+					if (this.settings.imagesCopy) {
+						if (await copyExternalImage(this.app, pathImageOld, pathImageNew))
+							lineElements.rowEdited = `![[${citeKey}_${lineElements.imagePath}.png]] ${lineElements.citeKey}`;
 					} else {
-						new Notice(
-							`Cannot find image at "${pathImageOld}". Provide the correct zotero data directory location in the settings`
-						);
+						lineElements.rowEdited = "![](file://" + encodeURI(pathImageOld) + ")" + lineElements.zoteroBackLink;
 					}
 				}
 
@@ -2692,7 +2645,10 @@ export default class MyPlugin extends Plugin {
 		return annotationType;
 	}
 
-	extractAnnotation(selectedEntry: Reference, noteTitleFull: string) {
+	async extractAnnotation(selectedEntry: Reference, noteTitleFull: string) {
+		this.noteElements = [];
+		this.userNoteElements = [];
+		this.keyWordArray = [];
 		let extractedAnnotations = "";
 		let extractedAnnotationsYellow = "";
 		let extractedAnnotationsRed = "";
@@ -2778,23 +2734,23 @@ export default class MyPlugin extends Plugin {
 
 
 				// Remove special characters that would break the replacement of the text in the template
-				//lineElements.rowEdited = lineElements.rowEdited.replaceAll("$>", '$$'); 
+				//lineElements.rowEdited = lineElements.rowEdited.replaceAll("$>", '$$');
 				note = note.replaceAll("$&", '$ &');
 
 				//Identify the extraction Type (Zotero vs. Zotfile)
 				let extractionType = undefined;
 
-				if (unescape(note).includes("<span class=")) {
+				if (decodeLegacyEscapes(note).includes("<span class=")) {
 					extractionType = "Zotero";
 				} else if (
-					unescape(note).includes(
+					decodeLegacyEscapes(note).includes(
 						'<a href="zotero://open-pdf/library/'
 					)
 				) {
 					extractionType = "Zotfile";
 				}
 				//Identify manual notes (not extracted from PDF) extracted from zotero
-				else if (unescape(note).includes("div data-schema-version")) {
+				else if (decodeLegacyEscapes(note).includes("div data-schema-version")) {
 					extractionType = "UserNote";
 				} else {
 					extractionType = "Other";
@@ -2830,7 +2786,7 @@ export default class MyPlugin extends Plugin {
 
 
 			//Run the function to edit each line
-			const resultsLineElements = this.formatNoteElements(
+			const resultsLineElements = await this.formatNoteElements(
 				this.noteElements,
 				selectedEntry.citationKey
 			);
@@ -2898,11 +2854,11 @@ export default class MyPlugin extends Plugin {
 
 	parseCollection(
 		selectedEntry: Reference,
-		data: { collections: Collection[] },
+		data: BibData,
 		metadata: string
 	) {
 		//Create object with all the collections
-		const exportedCollections: Collection[] = data.collections;
+		const exportedCollections = data.collections;
 
 		//identify the ID of the item
 		const selectedID = selectedEntry.itemID;
@@ -2930,7 +2886,7 @@ export default class MyPlugin extends Plugin {
 				exportedCollections[collectionKeys[indexCollection]].items;
 			const collectionParent =
 				exportedCollections[collectionKeys[indexCollection]].parent;
-			if (collectionItem.includes(selectedID)) {
+			if (collectionItem.includes(String(selectedID))) {
 				collectionArray.push(collectionName);
 				collectionParentCode.push(collectionParent);
 			}
@@ -3304,14 +3260,9 @@ export default class MyPlugin extends Plugin {
 		}
 	}
 
-	createNote(
+	async createNote(
 		selectedEntry: Reference,
-		data: {
-			collections: Record<string, never> | Collection[];
-			config?: Record<string, never>;
-			items?: Reference[];
-			version?: string;
-		}
+		data: BibData
 	) {
 		//Extract the reference within bracket to faciliate comparison
 		const authorKey = createAuthorKey(selectedEntry.creators);
@@ -3322,11 +3273,8 @@ export default class MyPlugin extends Plugin {
 
 
 
-		//create bugout to store and export logs in a file
-		let bugout = new Debugout({ realTimeLoggingOn: false });
-		if (this.settings.debugMode === true) {
-			bugout = new Debugout({ realTimeLoggingOn: true });
-		}
+		// Collect debug output only when explicitly enabled.
+		const bugout = new DebugLog(this.settings.debugMode);
 
 		//Load Template
 		const templateNote = this.importTemplate();
@@ -3347,7 +3295,7 @@ export default class MyPlugin extends Plugin {
 			this.settings.exportPath
 		);
 		//Extract the annotation and the keyword from the text
-		const resultAnnotations = this.extractAnnotation(
+		const resultAnnotations = await this.extractAnnotation(
 			selectedEntry,
 			noteTitleFull
 		);
@@ -3441,12 +3389,12 @@ export default class MyPlugin extends Plugin {
 		// Compare old note and new note
 		if (
 			this.settings.saveManualEdits !== "Overwrite Entire Note" &&
-			fs.existsSync(noteTitleFull)
+			await this.app.vault.adapter.exists(noteTitleFull)
 		) {
 			//Check if the settings in settings.saveManualEdits are TRUE. In that case compare existing file with new notes. If false don't look at existing note
 			//Check if an old version exists. If the old version has annotations then add the new annotation to the old annotaiton
 
-			const existingNoteAll = String(fs.readFileSync(noteTitleFull));
+			const existingNoteAll = await this.app.vault.adapter.read(noteTitleFull);
 
 
 			litnote = this.compareOldNewNote(
@@ -3463,68 +3411,40 @@ export default class MyPlugin extends Plugin {
 		if (this.settings.debugMode === true) {
 			bugout.downloadLog();
 		}
-		fs.writeFile(noteTitleFull, litnote, function (err) {
-			if (err) console.log(err);
-		});
+		await this.writeNote(noteTitleFull, litnote);
 		new Notice(`Imported ${selectedEntry.citationKey}!`);
 	}
 
-	checkSQLite() {
 
-
-
-		//const db = require('better-sqlite3')('/Users/stefanopagliari/Zotero/zotero.sqlite');
-
-		//const db = new Database('/Users/stefanopagliari/Zotero/zotero.sqlite');
-		//const defaultRoot = path.join(homedir(), "Zotero");
-		//zoteroDbPath: path.join(defaultRoot, "zotero.sqlite"),
-
+	async writeNote(path: string, content: string) {
+		const notePath = vaultRelativePath(path);
+		const folder = notePath.slice(0, notePath.lastIndexOf("/"));
+		if (folder && !await this.app.vault.adapter.exists(folder)) await this.app.vault.adapter.mkdir(folder);
+		const existing = this.app.vault.getAbstractFileByPath(notePath);
+		if (existing instanceof TFile) await this.app.vault.modify(existing, content);
+		else await this.app.vault.create(notePath, content);
 	}
 
-	updateCurrentNote(){
-		console.log("Updating Current Note");
-
-		// Check if the json file exists
-		const jsonPath = (this.app.vault.adapter as any).getBasePath() + "/" + this.settings.bibPath
-		if (!fs.existsSync(jsonPath)) { new Notice("No BetterBibTex Json file found at " + jsonPath) }
-
-		const rawdata = fs.readFileSync(
-			(this.app.vault.adapter as any).getBasePath() +
-			"/" +
-			this.settings.bibPath
-		);
-		const data = JSON.parse(rawdata.toString()); // rawdata is a buffer, converted to strin
-
-		// Find the citeKey of current note in file name
-		const currentNoteName = this.app.workspace.getActiveFile().name
-		const noteTitleFormat = this.settings.exportTitle+'.md'
-
-		const citeKey = parseCiteKeyFromNoteName(currentNoteName, noteTitleFormat);
-	
-		if (citeKey != null){
-			// find entry in library using citeKey
-			const entryIndex = data.items.findIndex(
-				(item: { citationKey: string }) =>
-					item.citationKey ===
-					citeKey
-			);
-			if (entryIndex!=-1){
-				// update current note
-				const currentEntry:Reference = data.items[entryIndex]
-				this.createNote(currentEntry, data);
-				new Notice("Current Note " + currentNoteName + " updated");
-			}
-			else{
-				new Notice("Current Note " + currentNoteName + " not found in the library");
-			}
-		}else{
-			new Notice("Cannot find citeKey from Current Note:" + currentNoteName);
-		}
+	async updateCurrentNote() {
+		const currentFile = this.app.workspace.getActiveFile();
+		if (!currentFile) { new Notice("Open a literature note first"); return; }
+		const data = await this.loadBibData();
+		if (!data) return;
+		const citeKey = parseCiteKeyFromNoteName(currentFile.name, this.settings.exportTitle + ".md");
+		const exactEntry = this.buildLibraryEntries(data).find(entry => entry.notePathShort === currentFile.path);
+		const entry = exactEntry?.rawEntry || data.items.find(item => item.citationKey === citeKey);
+		if (!entry) { new Notice("Cannot find this note in the library"); return; }
+		await this.createNote(entry, data);
 	}
+
+	runTask(task: Promise<unknown>): void {
+		void task.catch((error: unknown) => new Notice(error instanceof Error ? error.message : "Operation failed"));
+	}
+
 }
 
 // Helper functions for Zotero Lib View
-function discoverLibraryFieldNames(data: any): string[] {
+function discoverLibraryFieldNames(data: BibData): string[] {
 	if (data == null || !Array.isArray(data.items)) return [];
 	const fields = new Set<string>();
 	for (const item of data.items) {
@@ -3537,38 +3457,30 @@ function discoverLibraryFieldNames(data: any): string[] {
 	return Array.from(fields).sort((a, b) => a.localeCompare(b));
 }
 
-function discoverLibrarySubFields(data: any): Record<string, string[]> {
-	if (data == null || !Array.isArray(data.items)) return {};
-	const result: Record<string, Set<string>> = {};
+function discoverLibrarySubFields(data: BibData): Record<string, string[]> {
+	const result = new Map<string, Set<string>>();
 	for (const item of data.items) {
-		if (item == null || typeof item !== "object") continue;
-		for (const key of Object.keys(item)) {
-			let val = item[key];
-			if (Array.isArray(val) && val.length > 0) val = val[0];
-			if (val != null && typeof val === "object" && !Array.isArray(val)) {
-				if (!result[key]) result[key] = new Set();
-				Object.keys(val).forEach(sk => result[key].add(sk));
-			}
+		for (const [key, value] of Object.entries(item)) {
+			const candidate: unknown = Array.isArray(value) ? (value as unknown[])[0] : value;
+			if (!isRecord(candidate)) continue;
+			const fields = result.get(key) || new Set<string>();
+			Object.keys(candidate).forEach(field => fields.add(field));
+			result.set(key, fields);
 		}
 	}
-	const finalResult: Record<string, string[]> = {};
-	for (const key in result) {
-		finalResult[key] = Array.from(result[key]).sort();
-	}
-	return finalResult;
+	return Object.fromEntries(Array.from(result, ([key, fields]) => [key, Array.from(fields).sort()]));
 }
-
-function collectLibrarySearchValues(value: any, results: string[]) {
+function collectLibrarySearchValues(value: unknown, results: string[]) {
 	if (value == null) return;
 	if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
 		results.push(String(value));
 		return;
 	}
 	if (Array.isArray(value)) {
-		value.forEach(item => collectLibrarySearchValues(item, results));
+		(value as unknown[]).forEach(item => collectLibrarySearchValues(item, results));
 		return;
 	}
-	if (typeof value === "object") {
+	if (isRecord(value)) {
 		Object.values(value).forEach(item => collectLibrarySearchValues(item, results));
 	}
 }
@@ -3576,18 +3488,6 @@ function collectLibrarySearchValues(value: any, results: string[]) {
 function normalizeDivider(divider: string): string {
 	if (divider && divider.slice(-1) !== " ") return divider + " ";
 	return divider || "; ";
-}
-
-function createNotePathShort(selectedEntry: any, exportTitle: string, exportPath: string): string {
-    let title = exportTitle;
-    title = title.replace(/\{\{citeKey\}\}/g, selectedEntry.citationKey || "");
-    title = title.replace(/\{\{citationKey\}\}/g, selectedEntry.citationKey || "");
-    title = title.replace(/\{\{title\}\}/g, selectedEntry.title || "");
-    title = title.replace(/\{\{author\}\}/g, selectedEntry.authorKey || "");
-    title = title.replace(/\{\{authors\}\}/g, selectedEntry.authorKey || "");
-    title = title.replace(/\{\{year\}\}/g, selectedEntry.year || "");
-    title = title.replace(/[/\b?%*:|"<>]/g, "");
-    return normalizePath(exportPath + "/" + title + ".md");
 }
 
 function normalizeItemTypeForLibrary(itemType: string): string {
@@ -3609,42 +3509,42 @@ function normalizeYearForLibrary(date: string): string {
 	return match ? match[0] : "";
 }
 
-function getTagsForLibraryEntry(entry: any): string[] {
+function getTagsForLibraryEntry(entry: Reference): string[] {
 	if (!entry.tags || !Array.isArray(entry.tags)) return [];
-	return entry.tags.map((t: any) => t.tag || t).filter((t: any) => !!t);
+	return entry.tags.map(t => t.tag).filter(t => !!t);
 }
 
-function getCollectionsForLibraryEntry(entry: any, data: any, divider: string): string {
+function getCollectionsForLibraryEntry(entry: Reference, data: BibData, divider: string): string {
 	return getCollectionNamesForLibraryEntry(entry, data, divider, false);
 }
 
-function getParentCollectionsForLibraryEntry(entry: any, data: any, divider: string): string {
+function getParentCollectionsForLibraryEntry(entry: Reference, data: BibData, divider: string): string {
 	return getCollectionNamesForLibraryEntry(entry, data, divider, true);
 }
 
-function getCollectionNamesForLibraryEntry(entry: any, data: any, divider: string, parentsOnly: boolean): string {
+function getCollectionNamesForLibraryEntry(entry: Reference, data: BibData, divider: string, parentsOnly: boolean): string {
 	const selectedID = entry.itemID == null ? "" : String(entry.itemID);
 	const exportedCollections = data?.collections;
 	const directCollections = formatLibraryFieldValue(entry.collections, divider);
 	if (selectedID === "" || exportedCollections == null) return parentsOnly ? "" : directCollections;
 
 	const collections = Object.values(exportedCollections);
-	const collectionsByKey = new Map<string, any>();
-	collections.forEach((collection: any) => {
+	const collectionsByKey = new Map<string, Collection>();
+	collections.forEach((collection: Collection) => {
 		if (collection?.key != null) collectionsByKey.set(String(collection.key), collection);
 	});
 
 	const matchedCollections = collections
-		.filter((collection: any) => Array.isArray(collection?.items) && collection.items.map((item: any) => String(item)).includes(selectedID));
+		.filter((collection: Collection) => Array.isArray(collection?.items) && collection.items.map((item: unknown) => String(item)).includes(selectedID));
 
-	const selectedCollections = new Map<string, any>();
-	const addCollection = (collection: any) => {
+	const selectedCollections = new Map<string, Collection>();
+	const addCollection = (collection: Collection) => {
 		if (collection == null) return;
 		const key = collection.key != null ? String(collection.key) : String(collection.name || "");
 		if (key !== "") selectedCollections.set(key, collection);
 	};
 
-	matchedCollections.forEach((collection: any) => {
+	matchedCollections.forEach((collection: Collection) => {
 		if (!parentsOnly) addCollection(collection);
 		let parentKey = collection?.parent == null ? "" : String(collection.parent);
 		const seenParentKeys = new Set<string>();
@@ -3659,14 +3559,14 @@ function getCollectionNamesForLibraryEntry(entry: any, data: any, divider: strin
 	});
 
 	const collectionNames = Array.from(selectedCollections.values())
-		.map((collection: any) => collection?.name)
-		.filter((name: any): name is string => typeof name === "string" && name.trim() !== "")
+		.map((collection: Collection) => collection?.name)
+		.filter((name: unknown): name is string => typeof name === "string" && name.trim() !== "")
 		.sort((first, second) => first.localeCompare(second));
 
 	return collectionNames.length > 0 ? collectionNames.join(divider) : parentsOnly ? "" : directCollections;
 }
 
-function formatPrimaryCreatorListForLibrary(creators: any[], divider: string, nameFormat: string): string {
+function formatPrimaryCreatorListForLibrary(creators: Creator[], divider: string, nameFormat: string): string {
 	if (!creators || creators.length === 0) return "";
 	const list = creators.filter(c => c.creatorType === "author" || c.creatorType === "editor").map(c => {
 		if (c.name) return c.name;
@@ -3681,7 +3581,7 @@ function formatPrimaryCreatorListForLibrary(creators: any[], divider: string, na
 	return list[0] + " et al.";
 }
 
-function formatLibraryFieldValue(value: any, divider: string, mappingProperty?: string): string {
+function formatLibraryFieldValue(value: unknown, divider: string, mappingProperty?: string): string {
 	if (value == null) return "";
 	if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
 		let str = String(value);
@@ -3691,9 +3591,9 @@ function formatLibraryFieldValue(value: any, divider: string, mappingProperty?: 
 		return str.trim();
 	}
 	if (Array.isArray(value)) {
-		return value.map(item => formatLibraryFieldValue(item, divider, mappingProperty)).filter(item => item !== "").join(divider);
+		return (value as unknown[]).map(item => formatLibraryFieldValue(item, divider, mappingProperty)).filter(item => item !== "").join(divider);
 	}
-	if (typeof value === "object") {
+	if (isRecord(value)) {
 		if (typeof value.firstName === "string" || typeof value.lastName === "string") {
 			return [value.firstName || "", value.lastName || ""].join(" ").trim();
 		}
@@ -3708,7 +3608,7 @@ function formatLibraryFieldValue(value: any, divider: string, mappingProperty?: 
 		}
 		try {
 			return JSON.stringify(value);
-		} catch (error) {
+		} catch {
 			return "";
 		}
 	}

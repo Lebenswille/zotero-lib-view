@@ -1,3 +1,4 @@
+- Fix automatic version preparation so manifest, package, lockfile, and compatibility versions stay synchronized before a release tag is created.
 - Read libraries and create or update notes through Obsidian's vault APIs, including on mobile.
 - Keep library panel placement when the plugin unloads.
 - Remove regex lookbehind and the deprecated percent decoder for older iOS compatibility.

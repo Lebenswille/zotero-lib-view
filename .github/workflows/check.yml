@@ -13,6 +13,8 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
+      - name: Validate release version
+        run: node scripts/validate-release.cjs
       - run: npm ci --ignore-scripts
       - run: npm run check
       - run: npm audit
